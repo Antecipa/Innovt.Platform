@@ -27,8 +27,11 @@ public class DataDogEnrich : ILogEventEnricher
 
         try
         {
-            var ddParentId = Convert.ToUInt64(activity.ParentId.ToString().Substring(16), 16).ToString();
-            logEvent.AddOrUpdateProperty(new LogEventProperty("dd.parent_id", new ScalarValue(ddParentId)));
+            if (activity.ParentId != null)
+            {
+                var ddParentId = System.Text.RegularExpressions.Regex.Replace(activity.ParentId.ToString(), "[^0-9]+?", "");
+                logEvent.AddOrUpdateProperty(new LogEventProperty("dd.parent_id", new ScalarValue(ddParentId)));
+            }
         }
         catch (Exception) { }
     }
