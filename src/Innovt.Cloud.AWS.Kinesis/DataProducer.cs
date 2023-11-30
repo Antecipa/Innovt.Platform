@@ -2,6 +2,12 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Kinesis
 
+using Amazon.Kinesis;
+using Amazon.Kinesis.Model;
+using Innovt.Cloud.AWS.Configuration;
+using Innovt.Core.CrossCutting.Log;
+using Innovt.Core.Utilities;
+using Innovt.Domain.Core.Streams;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,12 +17,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.Kinesis;
-using Amazon.Kinesis.Model;
-using Innovt.Cloud.AWS.Configuration;
-using Innovt.Core.CrossCutting.Log;
-using Innovt.Core.Utilities;
-using Innovt.Domain.Core.Streams;
 
 namespace Innovt.Cloud.AWS.Kinesis;
 
@@ -55,7 +55,8 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
         {
             if (data.TraceId.IsNullOrEmpty() && activity != null)
             {
-                data.TraceId = activity.TraceId.ToString();
+                data.TraceId = activity.Id.ToString();
+                data.ParentId = activity.ParentId;
             }
 
             data.PublishedAt = DateTimeOffset.UtcNow;

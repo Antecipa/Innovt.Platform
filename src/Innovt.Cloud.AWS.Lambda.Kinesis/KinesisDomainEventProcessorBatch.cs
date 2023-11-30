@@ -2,14 +2,14 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Lambda.Kinesis
 
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.KinesisEvents;
 using Innovt.Core.CrossCutting.Log;
 using Innovt.Domain.Core.Events;
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Innovt.Cloud.AWS.Lambda.Kinesis;
 
@@ -45,13 +45,13 @@ public abstract class KinesisDomainEventProcessorBatch<TBody> : KinesisProcessor
         Logger.Info($"Processing Kinesis Event With {message?.Records?.Count} records.");
 
         using var activity = EventProcessorActivitySource.StartActivity(nameof(Handle));
+
         activity?.SetTag("Message.Records", message?.Records?.Count);
 
         if (message?.Records == null || message.Records.Count == 0) return new BatchFailureResponse();
 
-        Logger.Info($"Processing Kinesis Event With {message?.Records?.Count} records.");
         var batchMessages = await CreateBatchMessages(message.Records).ConfigureAwait(false);
-        Logger.Info($"Processing Kinesis Event With {message?.Records?.Count} records.");
+
         activity?.SetTag("BatchMessagesCount", batchMessages.Count);
 
         return await ProcessMessages(batchMessages).ConfigureAwait(false);

@@ -2,8 +2,8 @@
 // Author: Michel Borges
 // Project: Innovt.Domain.Core
 
-using System;
 using Innovt.Domain.Core.Streams;
+using System;
 
 namespace Innovt.Domain.Core.Events;
 
@@ -35,6 +35,7 @@ public abstract class DomainEvent : IDataStream
     public string Partition { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }
     public string TraceId { get; set; }
+    public string ParentId { get; set; }
     public DateTime ApproximateArrivalTimestamp { get; set; }
 
     public static DomainEvent Empty(string partition)

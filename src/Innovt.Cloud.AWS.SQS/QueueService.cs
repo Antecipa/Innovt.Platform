@@ -2,12 +2,6 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.SQS
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Innovt.Cloud.AWS.Configuration;
@@ -15,6 +9,12 @@ using Innovt.Cloud.Queue;
 using Innovt.Core.CrossCutting.Log;
 using Innovt.Core.Exceptions;
 using Innovt.Core.Serialization;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Innovt.Cloud.AWS.SQS;
 
@@ -46,7 +46,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 #pragma warning restore CA1056 // URI-like properties should not be strings
 
     private AmazonSQSClient SqsClient => sqsClient ??= CreateService<AmazonSQSClient>();
-
 
     private ISerializer Serializer => serializer ??= new JsonSerializer();
 
@@ -105,7 +104,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         return messages;
     }
 
-
     public async Task DeQueueAsync(string popReceipt, CancellationToken cancellationToken = default)
     {
         using var activity = QueueActivitySource.StartActivity();
@@ -132,7 +130,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
                 await SqsClient.GetQueueAttributesAsync(queueUrl, attributes, cancellationToken)
                     .ConfigureAwait(false))
             .ConfigureAwait(false);
-
 
         activity?.SetTag("sqs.approximate_number_of_messages", response?.ApproximateNumberOfMessages);
 
@@ -227,7 +224,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         activity?.SetTag("sqs.status_code", response.HttpStatusCode);
         activity?.SetTag("sqs.status_code", response.Failed);
 
-
         if (response.Successful != null)
             foreach (var item in response.Successful)
                 result.Add(new MessageQueueResult { Id = item.Id, Success = true });
@@ -243,13 +239,18 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
             activity?.SetTag($"sqs.message_{item.Id}_sender_fault", item.SenderFault);
         }
 
-
         return result;
     }
 
     private static void EnrichMessage(Activity activity, SendMessageRequest messageRequest)
     {
         if (activity == null) return;
+
+        if (!string.IsNullOrEmpty(activity.Id))
+            messageRequest.MessageAttributes.TryAdd("TraceId", new MessageAttributeValue
+            {
+                StringValue = activity.Id
+            });
 
         if (!string.IsNullOrEmpty(activity.ParentId))
             messageRequest.MessageAttributes.TryAdd("ParentId", new MessageAttributeValue

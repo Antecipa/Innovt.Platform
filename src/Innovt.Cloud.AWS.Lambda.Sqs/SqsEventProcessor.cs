@@ -2,17 +2,17 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Lambda.Sqs
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
 using Innovt.Cloud.Queue;
 using Innovt.Core.CrossCutting.Log;
 using Innovt.Core.Serialization;
 using Innovt.Core.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Innovt.Cloud.AWS.Lambda.Sqs;
 
@@ -64,14 +64,14 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
 
         if (message?.Records == null || message.Records.Count == 0) return response;
 
-        using var activity = EventProcessorActivitySource.StartActivity(nameof(Handle));
-        activity?.SetTag("SqsMessageRecordsCount", message?.Records?.Count);
-
         var processedMessages = new List<string>();
 
         foreach (var record in message.Records)
+        {
             try
             {
+                using var activity = StartBaseActivity(nameof(Handle));
+
                 Logger.Info($"Processing SQS Event message ID {record.MessageId}.");
 
                 var queueMessage = new QueueMessage<TBody>
@@ -86,9 +86,9 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
                 {
                     queueMessage.ParseQueueAttributes(record.Attributes);
 
-                    record.Attributes.TryGetValue("TraceId", out var traceId);
+                    record.Attributes.TryGetValue("ParentId", out var parentId);
 
-                    if (traceId is not null) activity?.SetParentId(traceId);
+                    if (parentId is not null) activity?.SetParentId(parentId);
                 }
 
                 activity?.SetTag("SqsMessageId", queueMessage.MessageId);
@@ -106,14 +106,14 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
             }
             catch (Exception ex)
             {
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                if (Activity.Current is not null)
+                    Activity.Current.SetStatus(ActivityStatusCode.Error, ex.Message);
 
                 if (!ReportBatchFailures)
                     throw;
 
                 Logger.Warning($"SQS Event message ID {record.MessageId} will be returned as item failure.");
                 Logger.Error(ex, $"Exception for message ID {record.MessageId}.");
-
 
                 if (isFifo)
                 {
@@ -123,6 +123,7 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
 
                 response.AddItem(record.MessageId);
             }
+        }
 
         return response;
     }
