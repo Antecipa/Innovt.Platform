@@ -78,8 +78,6 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
 
     private async Task InternalPublish(IEnumerable<T> dataList, CancellationToken cancellationToken = default)
     {
-        Logger.Info("Kinesis Publisher Started");
-
         if (dataList is null)
         {
             Logger.Info("The event list is empty or null.");
@@ -90,7 +88,7 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
 
         if (dataStreams.Count > 500) throw new InvalidEventLimitException();
 
-        using var activity = ActivityDataProducer.StartActivity(nameof(InternalPublish));
+        using var activity = Activity.Current;
         activity?.SetTag("BusName", BusName);
 
         var request = new PutRecordsRequest
@@ -98,8 +96,6 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
             StreamName = BusName,
             Records = CreatePutRecords(dataStreams, activity)
         };
-
-        Logger.Info($"Publishing Data for Bus {BusName}");
 
         var policy = base.CreateDefaultRetryAsyncPolicy();
 

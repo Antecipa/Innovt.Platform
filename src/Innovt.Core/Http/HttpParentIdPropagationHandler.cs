@@ -1,12 +1,16 @@
 ﻿using System.Diagnostics;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Innovt.AspNetCore.Handlers
+namespace Innovt.Core.Http
 {
-    public class ParentIdPropagationHandler : DelegatingHandler
+    public class HttpParentIdPropagationHandler : DelegatingHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var activity = Activity.Current;
+
             if (activity != null && request?.Headers != null)
             {
                 string parentId = Activity.Current.ParentId;

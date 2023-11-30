@@ -5,7 +5,10 @@
 using Amazon.Lambda.Core;
 using Innovt.Core.CrossCutting.Ioc;
 using Innovt.Core.CrossCutting.Log;
+using Innovt.Core.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -45,12 +48,11 @@ public abstract class BaseEventProcessor
         if (isIocContainerInitialized)
             return;
 
-        Logger.Info("Initializing IOC Container.");
-
         var container = SetupIocContainer();
 
         if (container != null)
         {
+            AddCoreService(container);
             container.CheckConfiguration();
 
             InitializeLogger(container.Resolve<ILogger>());
@@ -63,6 +65,21 @@ public abstract class BaseEventProcessor
         }
 
         isIocContainerInitialized = true;
+    }
+
+    private void AddCoreService(IContainer container)
+    {
+        var services = new ServiceCollection();
+
+        services.ConfigureAll<HttpClientFactoryOptions>(options =>
+        {
+            options.HttpMessageHandlerBuilderActions.Add(builder =>
+            {
+                builder.AdditionalHandlers.Add(builder.Services.GetRequiredService<HttpParentIdPropagationHandler>());
+            });
+        });
+
+        container.AddModule(new IOCModule(services));
     }
 
     protected Activity StartBaseActivity(string activityName, string parentId = null)

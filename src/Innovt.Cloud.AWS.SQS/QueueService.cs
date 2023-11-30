@@ -106,7 +106,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
     public async Task DeQueueAsync(string popReceipt, CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.receipt_handle", popReceipt);
 
         var queueUrl = await GetQueueUrlAsync().ConfigureAwait(false);
@@ -120,7 +120,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
     public async Task<int> ApproximateMessageCountAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
 
         var attributes = new List<string> { "ApproximateNumberOfMessages" };
 
@@ -138,7 +138,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
     public async Task CreateIfNotExistAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.queue_name", QueueName);
 
         await SqsClient.CreateQueueAsync(QueueName, cancellationToken).ConfigureAwait(false);
@@ -163,7 +163,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        using var activity = QueueActivitySource.StartActivity("QueueAsync");
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.delay_seconds", visibilityTimeoutInSeconds);
 
         var messageRequest = new SendMessageRequest
@@ -197,7 +197,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        using var activity = QueueActivitySource.StartActivity("QueueBatchAsync");
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.delay_seconds", delaySeconds);
 
         var messageRequest = new SendMessageBatchRequest
@@ -269,7 +269,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (QueueUrl != null && QueueUrl.EndsWith(QueueName, StringComparison.OrdinalIgnoreCase)) return QueueUrl;
 
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.account_number", Configuration?.AccountNumber);
         activity?.SetTag("sqs.queue_name", QueueName);
 

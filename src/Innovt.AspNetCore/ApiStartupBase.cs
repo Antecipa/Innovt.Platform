@@ -3,10 +3,10 @@
 // Project: Innovt.AspNetCore
 
 using Innovt.AspNetCore.Filters;
-using Innovt.AspNetCore.Handlers;
 using Innovt.AspNetCore.Infrastructure;
 using Innovt.AspNetCore.Middleware;
 using Innovt.AspNetCore.Model;
+using Innovt.Core.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
@@ -111,13 +111,13 @@ public abstract class ApiStartupBase
         if (services == null) throw new ArgumentNullException(nameof(services));
 
         services.AddSingleton<ApiExceptionFilter>();
-        services.AddScoped<ParentIdPropagationHandler>();
+        services.AddScoped<HttpParentIdPropagationHandler>();
 
         services.ConfigureAll<HttpClientFactoryOptions>(options =>
         {
             options.HttpMessageHandlerBuilderActions.Add(builder =>
             {
-                builder.AdditionalHandlers.Add(builder.Services.GetRequiredService<ParentIdPropagationHandler>());
+                builder.AdditionalHandlers.Add(builder.Services.GetRequiredService<HttpParentIdPropagationHandler>());
             });
         });
 
@@ -202,9 +202,9 @@ public abstract class ApiStartupBase
 
         ConfigureApp(app, env, loggerFactory);
 
-        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
-
         app.UseMiddleware<ParentIdMiddleware>();
+
+        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
     }
 
     protected virtual Action<ApiBehaviorOptions> ConfigureApiBehavior()
