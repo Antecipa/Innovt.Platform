@@ -3,7 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>Innovt.AspNetCore</PackageId>
-    <PackageVersion>6.2.2-Alpha05</PackageVersion>
+    <PackageVersion>6.2.2-Alpha06</PackageVersion>
     <Authors>Michel Borges</Authors>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

@@ -13,6 +13,7 @@ public interface IQueueMessage
     string ReceiptHandle { get; set; }
 
     string TraceId { get; set; }
+    string ParentId { get; set; }
 
     double? ApproximateFirstReceiveTimestamp { get; set; }
 

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using static Amazon.Lambda.SQSEvents.SQSEvent;
 
 namespace Innovt.Cloud.AWS.Lambda.Sqs;
 
@@ -70,10 +71,6 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
         {
             try
             {
-                using var activity = StartBaseActivity(nameof(Handle));
-
-                Logger.Info($"Processing SQS Event message ID {record.MessageId}.");
-
                 var queueMessage = new QueueMessage<TBody>
                 {
                     MessageId = record.MessageId,
@@ -85,11 +82,16 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
                 if (record.Attributes is not null)
                 {
                     queueMessage.ParseQueueAttributes(record.Attributes);
-
-                    record.Attributes.TryGetValue("ParentId", out var parentId);
-
-                    if (parentId is not null) activity?.SetParentId(parentId);
                 }
+
+                if (record.MessageAttributes is not null)
+                {
+                    ParseQueueMessageAttributes(queueMessage, record.MessageAttributes);
+                }
+
+                using var activity = StartBaseActivity(nameof(Handle), queueMessage.ParentId);
+
+                Logger.Info($"Processing SQS Event message ID {record.MessageId}.");
 
                 activity?.SetTag("SqsMessageId", queueMessage.MessageId);
                 activity?.SetTag("SqsMessageApproximateFirstReceiveTimestamp",
@@ -131,6 +133,19 @@ public abstract class SqsEventProcessor<TBody> : EventProcessor<SQSEvent, BatchF
     private static IEnumerable<string> GetRemainingMessages(SQSEvent message, IList<string> processedMessages)
     {
         return message.Records.Where(r => !processedMessages.Contains(r.MessageId)).Distinct().Select(r => r.MessageId);
+    }
+
+    private void ParseQueueMessageAttributes(IQueueMessage queueMessage,
+     Dictionary<string, MessageAttribute> queueAttributes)
+    {
+        if (queueMessage is null || queueAttributes == null)
+            return;
+
+        if (queueAttributes.ContainsKey("TraceId"))
+            queueMessage.TraceId = queueAttributes["TraceId"].StringValue;
+
+        if (queueAttributes.ContainsKey("ParentId"))
+            queueMessage.ParentId = queueAttributes["ParentId"].StringValue;
     }
 
     protected abstract Task ProcessMessage(QueueMessage<TBody> message);

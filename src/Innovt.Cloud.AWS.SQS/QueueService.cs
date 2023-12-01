@@ -61,7 +61,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         int? visibilityTimeoutInSeconds = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.quantity", quantity);
         activity?.SetTag("sqs.waitTimeInSeconds", waitTimeInSeconds);
         activity?.SetTag("sqs.visibilityTimeoutInSeconds", visibilityTimeoutInSeconds);
@@ -98,6 +98,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
             tMessage.ReceiptHandle = message.ReceiptHandle;
             tMessage.Attributes = message.Attributes;
             tMessage.ParseQueueAttributes(message.Attributes);
+            ParseQueueMessageAttributes(tMessage, message.MessageAttributes);
             messages.Add(tMessage);
         }
 
@@ -249,19 +250,22 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         if (!string.IsNullOrEmpty(activity.Id))
             messageRequest.MessageAttributes.TryAdd("TraceId", new MessageAttributeValue
             {
-                StringValue = activity.Id
+                StringValue = activity.Id,
+                DataType = "String",
             });
 
         if (!string.IsNullOrEmpty(activity.ParentId))
             messageRequest.MessageAttributes.TryAdd("ParentId", new MessageAttributeValue
             {
-                StringValue = activity.ParentId
+                StringValue = activity.ParentId,
+                DataType = "String",
             });
 
         if (string.IsNullOrEmpty(activity.RootId))
             messageRequest.MessageAttributes.TryAdd("RootTraceId", new MessageAttributeValue
             {
-                StringValue = activity.RootId
+                StringValue = activity.RootId,
+                DataType = "String",
             });
     }
 
@@ -280,6 +284,19 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         activity?.SetTag("sqs.queue_url", QueueUrl);
 
         return QueueUrl;
+    }
+
+    private void ParseQueueMessageAttributes(IQueueMessage queueMessage,
+     Dictionary<string, MessageAttributeValue> queueAttributes)
+    {
+        if (queueMessage is null || queueAttributes == null)
+            return;
+
+        if (queueAttributes.ContainsKey("TraceId"))
+            queueMessage.TraceId = queueAttributes["TraceId"].StringValue;
+
+        if (queueAttributes.ContainsKey("ParentId"))
+            queueMessage.ParentId = queueAttributes["ParentId"].StringValue;
     }
 
     protected override void DisposeServices()
