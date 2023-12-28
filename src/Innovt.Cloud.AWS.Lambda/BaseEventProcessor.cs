@@ -91,6 +91,10 @@ public abstract class BaseEventProcessor
 
         if (!string.IsNullOrWhiteSpace(parentId))
             activity.SetParentId(parentId);
+        else if (!string.IsNullOrWhiteSpace(Context.AwsRequestId))
+            activity.SetParentId(Context.AwsRequestId);
+        else
+            activity.SetParentId(Guid.NewGuid().ToString());
 
         activity.SetTag("Lambda.FunctionName", Context.FunctionName);
         activity.SetTag("Lambda.FunctionVersion", Context.FunctionVersion);
