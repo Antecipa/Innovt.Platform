@@ -25,6 +25,7 @@ public class DataStream<T> : IDataStream<T> where T : class
     public string Partition { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }
     public string TraceId { get; set; }
+    public string ParentId { get; set; }
     public DateTime ApproximateArrivalTimestamp { get; set; }
     public T Body { get; set; }
 

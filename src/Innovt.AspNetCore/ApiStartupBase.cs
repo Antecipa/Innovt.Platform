@@ -4,7 +4,9 @@
 
 using Innovt.AspNetCore.Filters;
 using Innovt.AspNetCore.Infrastructure;
+using Innovt.AspNetCore.Middleware;
 using Innovt.AspNetCore.Model;
+using Innovt.Core.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Resources;
@@ -108,6 +111,15 @@ public abstract class ApiStartupBase
         if (services == null) throw new ArgumentNullException(nameof(services));
 
         services.AddSingleton<ApiExceptionFilter>();
+        services.AddScoped<HttpParentIdPropagationHandler>();
+
+        services.ConfigureAll<HttpClientFactoryOptions>(options =>
+        {
+            options.HttpMessageHandlerBuilderActions.Add(builder =>
+            {
+                builder.AdditionalHandlers.Add(builder.Services.GetRequiredService<HttpParentIdPropagationHandler>());
+            });
+        });
 
         var provider = services.BuildServiceProvider();
 
@@ -189,6 +201,8 @@ public abstract class ApiStartupBase
         app.UseHealthChecks(DefaultHealthPath);
 
         ConfigureApp(app, env, loggerFactory);
+
+        app.UseMiddleware<ParentIdMiddleware>();
 
         app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
     }

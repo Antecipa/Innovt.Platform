@@ -29,6 +29,7 @@ public class QueueMessage<T> : IQueueMessage
     public string ReceiptHandle { get; set; }
 
     public string TraceId { get; set; }
+    public string ParentId { get; set; }
 
     public double? ApproximateFirstReceiveTimestamp { get; set; }
 

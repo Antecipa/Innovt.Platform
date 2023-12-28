@@ -16,6 +16,7 @@ public interface IDataStream
 
     public DateTimeOffset? PublishedAt { get; set; }
     public string TraceId { get; set; }
+    public string ParentId { get; set; }
     public DateTime ApproximateArrivalTimestamp { get; set; }
 }
 

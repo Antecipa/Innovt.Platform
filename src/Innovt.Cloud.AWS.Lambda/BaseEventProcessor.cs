@@ -5,7 +5,10 @@
 using Amazon.Lambda.Core;
 using Innovt.Core.CrossCutting.Ioc;
 using Innovt.Core.CrossCutting.Log;
+using Innovt.Core.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -45,12 +48,11 @@ public abstract class BaseEventProcessor
         if (isIocContainerInitialized)
             return;
 
-        Logger.Info("Initializing IOC Container.");
-
         var container = SetupIocContainer();
 
         if (container != null)
         {
+            AddCoreService(container);
             container.CheckConfiguration();
 
             InitializeLogger(container.Resolve<ILogger>());
@@ -65,24 +67,41 @@ public abstract class BaseEventProcessor
         isIocContainerInitialized = true;
     }
 
-    protected Activity StartBaseActivity(string activityName)
+    private void AddCoreService(IContainer container)
+    {
+        var services = new ServiceCollection();
+
+        services.ConfigureAll<HttpClientFactoryOptions>(options =>
+        {
+            options.HttpMessageHandlerBuilderActions.Add(builder =>
+            {
+                builder.AdditionalHandlers.Add(builder.Services.GetRequiredService<HttpParentIdPropagationHandler>());
+            });
+        });
+
+        container.AddModule(new IOCModule(services));
+    }
+
+    protected Activity StartBaseActivity(string activityName, string parentId = null)
     {
         if (activityName is null) throw new ArgumentNullException(nameof(activityName));
 
-        var activity = EventProcessorActivitySource.StartActivity(activityName) ?? new Activity(activityName);
-        activity?.SetTag("Lambda.FunctionName", Context.FunctionName);
-        activity?.SetTag("Lambda.FunctionVersion", Context.FunctionVersion);
-        activity?.SetTag("Lambda.LogStreamName", Context.LogStreamName);
-        activity?.AddBaggage("Lambda.RequestId", Context.AwsRequestId);
+        var activity = new Activity(activityName);
+        activity.SetIdFormat(ActivityIdFormat.W3C);
 
-        //setting request id as parentId.
-        if (activity?.ParentId is null && Context.AwsRequestId != null)
-        {
-            activity?.SetParentId(Context.AwsRequestId);
-            activity?.SetIdFormat(ActivityIdFormat.W3C);
-        }
+        if (!string.IsNullOrWhiteSpace(parentId))
+            activity.SetParentId(parentId);
+        else if (!string.IsNullOrWhiteSpace(Context.AwsRequestId))
+            activity.SetParentId(Context.AwsRequestId);
+        else
+            activity.SetParentId(Guid.NewGuid().ToString());
 
-        activity?.Start();
+        activity.SetTag("Lambda.FunctionName", Context.FunctionName);
+        activity.SetTag("Lambda.FunctionVersion", Context.FunctionVersion);
+        activity.SetTag("Lambda.LogStreamName", Context.LogStreamName);
+        activity.AddBaggage("Lambda.RequestId", Context.AwsRequestId);
+
+        activity.Start();
 
         return activity;
     }

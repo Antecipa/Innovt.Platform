@@ -2,12 +2,12 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Lambda.Kinesis
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Innovt.Core.CrossCutting.Log;
 using Innovt.Core.Exceptions;
 using Innovt.Domain.Core.Events;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Innovt.Cloud.AWS.Lambda.Kinesis;
 
@@ -30,6 +30,7 @@ public abstract class KinesisDomainEventProcessor<TBody> : KinesisDomainEventPro
         var response = new BatchFailureResponse();
 
         foreach (var message in messages)
+        {
             try
             {
                 if (message is null)
@@ -40,6 +41,10 @@ public abstract class KinesisDomainEventProcessor<TBody> : KinesisDomainEventPro
                     Logger.Warning($"Discarding message from partition {message.Partition}. EventId={message.EventId}");
                     continue;
                 }
+
+                using var activity = StartBaseActivity(nameof(ProcessMessages), message?.ParentId);
+                activity?.SetTag("Kinesis.EventId", message.EventId);
+                activity?.SetTag("Kinesis.EventName", message.Partition);
 
                 Logger.Info($"Processing Kinesis EventId={message.EventId}.");
 
@@ -55,6 +60,7 @@ public abstract class KinesisDomainEventProcessor<TBody> : KinesisDomainEventPro
                 Logger.Error(ex, $"Exception for message ID {message?.EventId}.");
                 response.AddItem(message?.EventId);
             }
+        }
 
         return response;
     }

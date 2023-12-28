@@ -2,6 +2,12 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Kinesis
 
+using Amazon.Kinesis;
+using Amazon.Kinesis.Model;
+using Innovt.Cloud.AWS.Configuration;
+using Innovt.Core.CrossCutting.Log;
+using Innovt.Core.Utilities;
+using Innovt.Domain.Core.Streams;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,12 +17,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.Kinesis;
-using Amazon.Kinesis.Model;
-using Innovt.Cloud.AWS.Configuration;
-using Innovt.Core.CrossCutting.Log;
-using Innovt.Core.Utilities;
-using Innovt.Domain.Core.Streams;
 
 namespace Innovt.Cloud.AWS.Kinesis;
 
@@ -55,7 +55,8 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
         {
             if (data.TraceId.IsNullOrEmpty() && activity != null)
             {
-                data.TraceId = activity.TraceId.ToString();
+                data.TraceId = activity.Id.ToString();
+                data.ParentId = activity.ParentId;
             }
 
             data.PublishedAt = DateTimeOffset.UtcNow;
@@ -77,8 +78,6 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
 
     private async Task InternalPublish(IEnumerable<T> dataList, CancellationToken cancellationToken = default)
     {
-        Logger.Info("Kinesis Publisher Started");
-
         if (dataList is null)
         {
             Logger.Info("The event list is empty or null.");
@@ -89,7 +88,7 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
 
         if (dataStreams.Count > 500) throw new InvalidEventLimitException();
 
-        using var activity = ActivityDataProducer.StartActivity(nameof(InternalPublish));
+        using var activity = Activity.Current;
         activity?.SetTag("BusName", BusName);
 
         var request = new PutRecordsRequest
@@ -97,8 +96,6 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
             StreamName = BusName,
             Records = CreatePutRecords(dataStreams, activity)
         };
-
-        Logger.Info($"Publishing Data for Bus {BusName}");
 
         var policy = base.CreateDefaultRetryAsyncPolicy();
 

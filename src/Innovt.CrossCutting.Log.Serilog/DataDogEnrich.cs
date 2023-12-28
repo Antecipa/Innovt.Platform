@@ -2,10 +2,10 @@
 // Author: Michel Borges
 // Project: Innovt.CrossCutting.Log.Serilog
 
-using System;
-using System.Diagnostics;
 using Serilog.Core;
 using Serilog.Events;
+using System;
+using System.Diagnostics;
 
 namespace Innovt.CrossCutting.Log.Serilog;
 
@@ -24,9 +24,20 @@ public class DataDogEnrich : ILogEventEnricher
         var ddSpanId = Convert.ToUInt64(activity.SpanId.ToString(), 16).ToString();
         logEvent.AddOrUpdateProperty(new LogEventProperty("dd.trace_id", new ScalarValue(ddTraceId)));
         logEvent.AddOrUpdateProperty(new LogEventProperty("dd.span_id", new ScalarValue(ddSpanId)));
+
+        try
+        {
+            if (activity.ParentId != null)
+            {
+                var ddParentId = System.Text.RegularExpressions.Regex.Replace(activity.ParentId.ToString(), "[^0-9]+?", "");
+                logEvent.AddOrUpdateProperty(new LogEventProperty("dd.parent_id", new ScalarValue(ddParentId)));
+            }
+        }
+        catch (Exception) { }
     }
 
 #pragma warning disable CA1822 // Mark members as static
+
     private static Activity GetActivity()
 #pragma warning restore CA1822 // Mark members as static
     {

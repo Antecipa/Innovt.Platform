@@ -2,12 +2,6 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.SQS
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Innovt.Cloud.AWS.Configuration;
@@ -15,6 +9,12 @@ using Innovt.Cloud.Queue;
 using Innovt.Core.CrossCutting.Log;
 using Innovt.Core.Exceptions;
 using Innovt.Core.Serialization;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Innovt.Cloud.AWS.SQS;
 
@@ -47,7 +47,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
     private AmazonSQSClient SqsClient => sqsClient ??= CreateService<AmazonSQSClient>();
 
-
     private ISerializer Serializer => serializer ??= new JsonSerializer();
 
     /// <summary>
@@ -62,7 +61,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         int? visibilityTimeoutInSeconds = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.quantity", quantity);
         activity?.SetTag("sqs.waitTimeInSeconds", waitTimeInSeconds);
         activity?.SetTag("sqs.visibilityTimeoutInSeconds", visibilityTimeoutInSeconds);
@@ -99,16 +98,16 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
             tMessage.ReceiptHandle = message.ReceiptHandle;
             tMessage.Attributes = message.Attributes;
             tMessage.ParseQueueAttributes(message.Attributes);
+            ParseQueueMessageAttributes(tMessage, message.MessageAttributes);
             messages.Add(tMessage);
         }
 
         return messages;
     }
 
-
     public async Task DeQueueAsync(string popReceipt, CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.receipt_handle", popReceipt);
 
         var queueUrl = await GetQueueUrlAsync().ConfigureAwait(false);
@@ -122,7 +121,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
     public async Task<int> ApproximateMessageCountAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
 
         var attributes = new List<string> { "ApproximateNumberOfMessages" };
 
@@ -133,7 +132,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
                     .ConfigureAwait(false))
             .ConfigureAwait(false);
 
-
         activity?.SetTag("sqs.approximate_number_of_messages", response?.ApproximateNumberOfMessages);
 
         return (response?.ApproximateNumberOfMessages).GetValueOrDefault();
@@ -141,7 +139,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
     public async Task CreateIfNotExistAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.queue_name", QueueName);
 
         await SqsClient.CreateQueueAsync(QueueName, cancellationToken).ConfigureAwait(false);
@@ -166,7 +164,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        using var activity = QueueActivitySource.StartActivity("QueueAsync");
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.delay_seconds", visibilityTimeoutInSeconds);
 
         var messageRequest = new SendMessageRequest
@@ -200,7 +198,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
 
-        using var activity = QueueActivitySource.StartActivity("QueueBatchAsync");
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.delay_seconds", delaySeconds);
 
         var messageRequest = new SendMessageBatchRequest
@@ -227,7 +225,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         activity?.SetTag("sqs.status_code", response.HttpStatusCode);
         activity?.SetTag("sqs.status_code", response.Failed);
 
-
         if (response.Successful != null)
             foreach (var item in response.Successful)
                 result.Add(new MessageQueueResult { Id = item.Id, Success = true });
@@ -243,7 +240,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
             activity?.SetTag($"sqs.message_{item.Id}_sender_fault", item.SenderFault);
         }
 
-
         return result;
     }
 
@@ -251,16 +247,25 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (activity == null) return;
 
+        if (!string.IsNullOrEmpty(activity.Id))
+            messageRequest.MessageAttributes.TryAdd("TraceId", new MessageAttributeValue
+            {
+                StringValue = activity.Id,
+                DataType = "String",
+            });
+
         if (!string.IsNullOrEmpty(activity.ParentId))
             messageRequest.MessageAttributes.TryAdd("ParentId", new MessageAttributeValue
             {
-                StringValue = activity.ParentId
+                StringValue = activity.ParentId,
+                DataType = "String",
             });
 
         if (string.IsNullOrEmpty(activity.RootId))
             messageRequest.MessageAttributes.TryAdd("RootTraceId", new MessageAttributeValue
             {
-                StringValue = activity.RootId
+                StringValue = activity.RootId,
+                DataType = "String",
             });
     }
 
@@ -268,7 +273,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     {
         if (QueueUrl != null && QueueUrl.EndsWith(QueueName, StringComparison.OrdinalIgnoreCase)) return QueueUrl;
 
-        using var activity = QueueActivitySource.StartActivity();
+        using var activity = Activity.Current;
         activity?.SetTag("sqs.account_number", Configuration?.AccountNumber);
         activity?.SetTag("sqs.queue_name", QueueName);
 
@@ -279,6 +284,19 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         activity?.SetTag("sqs.queue_url", QueueUrl);
 
         return QueueUrl;
+    }
+
+    private void ParseQueueMessageAttributes(IQueueMessage queueMessage,
+     Dictionary<string, MessageAttributeValue> queueAttributes)
+    {
+        if (queueMessage is null || queueAttributes == null)
+            return;
+
+        if (queueAttributes.ContainsKey("TraceId"))
+            queueMessage.TraceId = queueAttributes["TraceId"].StringValue;
+
+        if (queueAttributes.ContainsKey("ParentId"))
+            queueMessage.ParentId = queueAttributes["ParentId"].StringValue;
     }
 
     protected override void DisposeServices()
