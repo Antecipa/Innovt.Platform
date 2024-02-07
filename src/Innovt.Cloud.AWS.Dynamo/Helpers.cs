@@ -2,16 +2,16 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Dynamo
 
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using Innovt.Cloud.Table;
 using Innovt.Core.Collections;
 using Innovt.Core.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
 using BatchWriteItemRequest = Amazon.DynamoDBv2.Model.BatchWriteItemRequest;
 using QueryRequest = Amazon.DynamoDBv2.Model.QueryRequest;
 using ScanRequest = Amazon.DynamoDBv2.Model.ScanRequest;
@@ -23,7 +23,7 @@ internal static class Helpers
     private const string PaginationTokenSeparator = "|";
     private const string EntitySplitter = "EntityType";
 
-    //code from Aws SDK 
+    //code from Aws SDK
 
     private static string GetTableName<T>()
     {
@@ -33,7 +33,6 @@ internal static class Helpers
 
         return attribute.TableName;
     }
-
 
     private static Dictionary<string, AttributeValue> CreateExpressionAttributeValues(object filter, string attributes)
     {
@@ -83,7 +82,6 @@ internal static class Helpers
 
         return queryRequest;
     }
-
 
     internal static ScanRequest CreateScanRequest<T>(Table.ScanRequest request)
     {
@@ -137,22 +135,21 @@ internal static class Helpers
         foreach (var item in request.Items)
         {
             var writeRequests = (from r in item.Value
-                select new WriteRequest()
-                {
-                    DeleteRequest = r.DeleteRequest is null
-                        ? null
-                        : new DeleteRequest(AttributeConverter.ConvertToAttributeValues(r.DeleteRequest)),
-                    PutRequest = r.PutRequest is null
-                        ? null
-                        : new PutRequest(AttributeConverter.ConvertToAttributeValues(r.PutRequest))
-                }).ToList();
+                                 select new WriteRequest()
+                                 {
+                                     DeleteRequest = r.DeleteRequest is null
+                                         ? null
+                                         : new DeleteRequest(AttributeConverter.ConvertToAttributeValues(r.DeleteRequest)),
+                                     PutRequest = r.PutRequest is null
+                                         ? null
+                                         : new PutRequest(AttributeConverter.ConvertToAttributeValues(r.PutRequest))
+                                 }).ToList();
 
             writeRequest.RequestItems.Add(item.Key, writeRequests);
         }
 
         return writeRequest;
     }
-
 
     internal static IList<T> ConvertAttributesToType<T>(IList<Dictionary<string, AttributeValue>> items)
     {
@@ -322,7 +319,16 @@ internal static class Helpers
         if (paginationToken is null)
             return null;
 
-        var decryptedToken = Convert.FromBase64String(paginationToken.UrlDecode()).Unzip();
+        string decryptedToken;
+
+        try
+        {
+            decryptedToken = Convert.FromBase64String(paginationToken.UrlDecode()).Unzip();
+        }
+        catch (Exception)
+        {
+            decryptedToken = Convert.FromBase64String(paginationToken).Unzip();
+        }
 
         var result = new Dictionary<string, AttributeValue>();
 
@@ -366,7 +372,6 @@ internal static class Helpers
             Item = AttributeConverter.ConvertToAttributeValues(transactionWriteItem.Items)
         };
     }
-
 
     private static ConditionCheck CreateConditionCheckTransactItem(TransactionWriteItem transactionWriteItem)
     {
@@ -426,7 +431,6 @@ internal static class Helpers
             Update = CreateUpdateTransactItem(transactionWriteItem)
         };
     }
-
 
     internal static TransactGetItem CreateTransactionGetItem(TransactionWriteItem transactionWriteItem)
     {
