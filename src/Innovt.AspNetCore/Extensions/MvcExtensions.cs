@@ -2,11 +2,6 @@
 // Author: Michel Borges
 // Project: Innovt.AspNetCore
 
-using System.Globalization;
-using System.Net;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 using Innovt.AspNetCore.Utility.Pagination;
 using Innovt.Core.Exceptions;
 using Innovt.Core.Utilities;
@@ -21,6 +16,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace Innovt.AspNetCore.Extensions;
 
@@ -96,7 +96,7 @@ public static class MvcExtensions
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
     public static void AddBearerAuthorization(this IServiceCollection services, IConfiguration configuration,
-        string configSection = "BearerAuthentication", bool validateAudience = true,
+        string configSection = "BearerAuthentication", bool validateAudience = false,
         bool validateIssuer = true, bool validateLifetime = true, bool validateIssuerSigningKey = true)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -108,7 +108,7 @@ public static class MvcExtensions
         if (audienceSection.Value == null)
             throw new CriticalException($"The Config Section '{configSection}:Audience' not defined.");
         if (authoritySection.Value == null)
-            throw new CriticalException("The Config Section '{configSection}:Authority' not defined.");
+            throw new CriticalException($"The Config Section '{configSection}:Authority' not defined.");
 
         services.AddBearerAuthorization(audienceSection.Value, authoritySection.Value, validateAudience, validateIssuer,
             validateLifetime, validateIssuerSigningKey, audiences);
@@ -127,7 +127,7 @@ public static class MvcExtensions
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
     /// <param name="validAudiences">The valid token audiences if you want to validate it.</param>
     public static void AddBearerAuthorization(this IServiceCollection services, string audienceId, string authority,
-        bool validateAudience = true,
+        bool validateAudience = false,
         bool validateIssuer = true, bool validateLifetime = true, bool validateIssuerSigningKey = true,
         string[]? validAudiences = null)
     {
@@ -244,8 +244,8 @@ public static class MvcExtensions
             return string.Empty;
 
         var value = (from c in user.Claims
-            where c.Type == type
-            select c.Value).FirstOrDefault();
+                     where c.Type == type
+                     select c.Value).FirstOrDefault();
 
         return value ?? string.Empty;
     }
@@ -279,7 +279,6 @@ public static class MvcExtensions
         var localIp = context.Connection?.LocalIpAddress;
 
         if (remoteIp == null && localIp == null) return true;
-
 
         if (remoteIp != null)
         {
