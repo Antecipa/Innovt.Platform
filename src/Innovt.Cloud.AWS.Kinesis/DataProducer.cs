@@ -77,7 +77,7 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
     /// <returns>A list of <see cref="PutRecordsRequestEntry" /> representing the data streams.</returns>
     private static List<PutRecordsRequestEntry> CreatePutRecords(IList<T> dataStreams, Activity activity)
     {
-        if (dataStreams == null)
+        if (dataStreams == null || !dataStreams.Any())
             return null;
 
         var request = new List<PutRecordsRequestEntry>();
@@ -114,7 +114,7 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
     /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
     private async Task InternalPublish(IEnumerable<T> dataList, CancellationToken cancellationToken = default)
     {
-        if (dataList is null)
+        if (dataList is null || !dataList.Any())
         {
             Logger.Info("The event list is empty or null.");
             return;
