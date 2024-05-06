@@ -2,17 +2,17 @@
 // Author: Michel Borges
 // Project: Innovt.Domain.Core
 
+using Innovt.Domain.Core.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Innovt.Domain.Core.Events;
 
 namespace Innovt.Domain.Core.Model;
 
 /// <summary>
 ///     Represents an abstract base class for entities in the domain model.
 /// </summary>
-public abstract class Entity
+public abstract class Entity<T> where T : struct
 {
     private readonly List<DomainEvent> domainEvents;
 
@@ -29,7 +29,7 @@ public abstract class Entity
     ///     Initializes a new instance of the <see cref="Entity" /> class with a specific identifier.
     /// </summary>
     /// <param name="id">The identifier for the entity.</param>
-    protected Entity(int id):this()
+    protected Entity(T id) : this()
     {
         Id = id;
     }
@@ -37,7 +37,7 @@ public abstract class Entity
     /// <summary>
     ///     Gets or sets the unique identifier for the entity.
     /// </summary>
-    public virtual int Id { get; set; }
+    public T Id { get; set; }
 
     /// <summary>
     ///     Gets or sets the date and time when the entity was created.
@@ -50,28 +50,14 @@ public abstract class Entity
     /// <returns><c>true</c> if the entity is new; otherwise, <c>false</c>.</returns>
     public bool IsNew()
     {
-        return Id == 0;
-    }
-
-    /// <inheritdoc />
-    public override int GetHashCode()
-    {
-        return Id;
-    }
-
-    /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        var anotherEntity = obj as Entity;
-
-        return anotherEntity?.Id == Id;
+        return Id.Equals(default(T));
     }
 
     /// <summary>
     ///     Adds a domain event to the entity.
     /// </summary>
     /// <param name="domainEvent">The domain event to add.</param>
-    public Entity AddDomainEvent(DomainEvent domainEvent)
+    public Entity<T> AddDomainEvent(DomainEvent domainEvent)
     {
         if (domainEvent == null) throw new ArgumentNullException(nameof(domainEvent));
 
@@ -89,13 +75,23 @@ public abstract class Entity
     {
         return domainEvents.Where(d => d.PublishedAt is null).ToList().AsReadOnly();
     }
+
+    public override bool Equals(object obj)
+    {
+        return obj is Entity<T> entity &&
+               EqualityComparer<T>.Default.Equals(Id, entity.Id);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Id);
+    }
 }
 
 /// <summary>
 ///     Represents an abstract base class for entities in the domain model with a specific type for the identifier.
 /// </summary>
 /// <typeparam name="T">The type of the identifier.</typeparam>
-public abstract class Entity<T> : Entity where T : struct
+public abstract class Entity : Entity<int>
 {
-    public new T Id { get; set; }
 }
