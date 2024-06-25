@@ -7,17 +7,10 @@ namespace Innovt.Cloud.Table;
 /// <summary>
 ///     Represents a message associated with a table, defining a unique identifier.
 /// </summary>
-public interface ITableMessage<T>
+public interface ITableMessage
 {
     /// <summary>
     ///     Gets or sets the unique identifier for the table message.
     /// </summary>
-    T Id { get; set; }
-}
-
-/// <summary>
-///     Represents a message associated with a table, defining a unique identifier.
-/// </summary>
-public interface ITableMessage : ITableMessage<string>
-{
+    string Id { get; set; }
 }
