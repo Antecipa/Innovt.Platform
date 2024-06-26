@@ -12,8 +12,19 @@ using Innovt.Core.Exceptions;
 
 namespace Innovt.Core.Validation;
 
+/// <summary>
+///     A static class containing extension methods for validating objects that implement the
+///     <see cref="IValidatableObject" /> interface.
+/// </summary>
 public static class Extensions
 {
+    /// <summary>
+    ///     Validates a collection of objects implementing the <see cref="IValidatableObject" /> interface and returns a
+    ///     collection of <see cref="ValidationResult" /> objects.
+    /// </summary>
+    /// <param name="array">The collection of objects to validate.</param>
+    /// <param name="context">An optional <see cref="ValidationContext" /> to specify validation context.</param>
+    /// <returns>A collection of <see cref="ValidationResult" /> objects containing validation errors.</returns>
     public static IEnumerable<ValidationResult> Validate(this IEnumerable<IValidatableObject> array,
         ValidationContext context = null)
     {
@@ -48,17 +59,19 @@ public static class Extensions
         var result = obj.Validate(context)?.ToList();
 
         if (result?.Any() == true)
-        {
             foreach (var item in result)
-            {
                 if (validationResults.All(r => r.ErrorMessage != item.ErrorMessage))
                     validationResults.Add(item);
-            }
-        }
 
         return validationResults.Distinct().ToList();
     }
 
+    /// <summary>
+    ///     Checks whether an object implementing the <see cref="IValidatableObject" /> interface is valid.
+    /// </summary>
+    /// <param name="obj">The object to validate.</param>
+    /// <param name="context">An optional <see cref="ValidationContext" /> to specify validation context.</param>
+    /// <returns>True if the object is valid; otherwise, false.</returns>
     public static bool IsValid(this IValidatableObject obj, ValidationContext context = null)
     {
         if (obj == null)
@@ -69,6 +82,12 @@ public static class Extensions
         return !result.Any();
     }
 
+    /// <summary>
+    ///     Ensures that an object implementing the <see cref="IValidatableObject" /> interface is valid; otherwise, throws a
+    ///     <see cref="BusinessException" /> with validation errors.
+    /// </summary>
+    /// <param name="obj">The object to validate.</param>
+    /// <param name="context">An optional <see cref="ValidationContext" /> to specify validation context.</param>
     public static void EnsureIsValid(this IValidatableObject obj, ValidationContext context = null)
     {
         if (obj == null) throw new ArgumentNullException(nameof(obj));
@@ -83,6 +102,12 @@ public static class Extensions
         throw new BusinessException(errors.ToList());
     }
 
+    /// <summary>
+    ///     Ensures that a command object is valid by treating it as an <see cref="IValidatableObject" />; otherwise, throws a
+    ///     <see cref="BusinessException" /> with validation errors.
+    /// </summary>
+    /// <param name="command">The command to validate.</param>
+    /// <param name="context">An optional <see cref="ValidationContext" /> to specify validation context.</param>
     public static void EnsureIsValid([NotNull] this ICommand command, ValidationContext context = null)
     {
         if (command == null) throw new ArgumentNullException(nameof(command));
@@ -90,6 +115,12 @@ public static class Extensions
         EnsureIsValid((IValidatableObject)command, context);
     }
 
+    /// <summary>
+    ///     Ensures that a command object is valid by treating it as an <see cref="IValidatableObject" />; otherwise, throws a
+    ///     <see cref="BusinessException" /> with validation errors.
+    /// </summary>
+    /// <param name="command">The command to validate.</param>
+    /// <param name="contextName">The name of the validation context.</param>
     public static void EnsureIsValid([NotNull] this ICommand command, string contextName)
     {
         if (command == null) throw new ArgumentNullException(nameof(command));

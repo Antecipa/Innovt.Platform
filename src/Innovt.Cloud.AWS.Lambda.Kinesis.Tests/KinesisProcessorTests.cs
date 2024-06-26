@@ -25,9 +25,9 @@ public class KinesisProcessorTests
         serviceMock = Substitute.For<IServiceMock>();
     }
 
-    private IServiceMock serviceMock;
+    private IServiceMock serviceMock = null!;
 
-    protected static readonly ActivitySource KinesisProcessorTestsActivitySource =
+    private static readonly ActivitySource KinesisProcessorTestsActivitySource =
         new("Innovt.Cloud.AWS.Lambda.Kinesis.Tests");
 
     [Test]
@@ -38,6 +38,8 @@ public class KinesisProcessorTests
         var function = new KinesisDomainEventEmptyInvoiceProcessor(domainServiceMock);
 
         await function.Process(new KinesisEvent(), new TestLambdaContext());
+        //should not receive the call because there is no records
+        domainServiceMock.DidNotReceive().ProcessMessage(Arg.Any<DomainEvent>());
     }
 
     [Test]
@@ -67,7 +69,7 @@ public class KinesisProcessorTests
 
         await function.Process(message, lambdaContext);
 
-        serviceMock.Received().InicializeIoc();
+        serviceMock.Received().InitializeIoc();
         serviceMock.DidNotReceive().ProcessMessage();
     }
 
@@ -113,7 +115,7 @@ public class KinesisProcessorTests
         Assert.ThrowsAsync<CriticalException>(async () => await function.Process(message, lambdaContext),
             $"Kinesis Data for EventId {eventId} is null");
 
-        serviceMock.Received().InicializeIoc();
+        serviceMock.Received().InitializeIoc();
         serviceMock.DidNotReceive().ProcessMessage();
     }
 
@@ -136,8 +138,8 @@ public class KinesisProcessorTests
 
         var result = await function.Process(message, lambdaContext);
 
-        Assert.IsNull(result);
-        serviceMock.Received().InicializeIoc();
+        Assert.That(result, Is.Null);
+        serviceMock.Received().InitializeIoc();
         serviceMock.Received().ProcessMessage(Arg.Any<string>());
     }
 
@@ -160,7 +162,7 @@ public class KinesisProcessorTests
 
         await function.Process(message, lambdaContext);
 
-        serviceMock.Received().InicializeIoc();
+        serviceMock.Received().InitializeIoc();
         serviceMock.Received().ProcessMessage(Arg.Any<string>());
     }
 
@@ -244,7 +246,7 @@ public class KinesisProcessorTests
         domainMock.DidNotReceive().ProcessMessage(Arg.Any<DomainEvent>());
     }
 
-    private KinesisEvent.KinesisEventRecord CreateValidKinesisRecord(Guid eventId, object invoice)
+    private static KinesisEvent.KinesisEventRecord CreateValidKinesisRecord(Guid eventId, object invoice)
     {
         var dataAsBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(invoice));
         var ms = new MemoryStream(dataAsBytes);

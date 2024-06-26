@@ -1,34 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageId>Innovt.Cloud.AWS</PackageId>
-    <PackageVersion>6.3.2</PackageVersion>
-    <Authors>Michel Borges</Authors>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Innovt Tecnologia</Copyright>
-    <Description>AWS implementation for cloud features.</Description>
-    <LangVersion>latest</LangVersion>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="AWSSDK.Core" Version="3.7.105.19" />
-    <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.101.25" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
-    <PackageReference Include="Polly" Version="7.2.3" />
-    <PackageReference Include="System.Text.Json" Version="6.0.6" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj" />
-    <ProjectReference Include="..\Innovt.Cloud\Innovt.Cloud.csproj" />
-    <ProjectReference Include="..\Innovt.Notification.Core\Innovt.Notification.Core.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="NETStandard.Library" Version="2.0.3" />
-  </ItemGroup>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <PackageId>Innovt.Cloud.AWS</PackageId>
+        <PackageVersion>8.1.3</PackageVersion>
+        <Authors>Michel Borges</Authors>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <Copyright>Innovt Tecnologia</Copyright>
+        <Description>AWS implementation for cloud features.</Description>
+        <LangVersion>latest</LangVersion>
+        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.Core" Version="3.7.303.15" />
+        <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.300.76" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1"/>
+        <PackageReference Include="Polly" Version="8.3.1" />
+        <PackageReference Include="System.Text.Json" Version="8.0.3" />
+        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj"/>
+        <ProjectReference Include="..\Innovt.Cloud\Innovt.Cloud.csproj"/>
+        <ProjectReference Include="..\Innovt.Notification.Core\Innovt.Notification.Core.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Update="NETStandard.Library" Version="2.0.3"/>
+    </ItemGroup>
 
 </Project>

@@ -11,36 +11,34 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Utilities.Collections;
 using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 //[CheckBuildProjectConfigurations]
 [ShutdownDotNetAfterServerBuild]
-class Build : NukeBuild
+internal class Build : NukeBuild
 {
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    private readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [GitRepository] readonly GitRepository GitRepository;
-    [GitVersion] readonly GitVersion GitVersion;
+    [GitRepository] private readonly GitRepository GitRepository;
+    [GitVersion] private readonly GitVersion GitVersion;
 
-    [Solution] readonly Solution Solution;
-    [Parameter] string NugetApiKey;
+    [Solution] private readonly Solution Solution;
+    [Parameter] private string NugetApiKey;
 
-    [Parameter] string NugetApiUrl = "https://nugetinnovt.azurewebsites.net/api/v2/package";
+    [Parameter] private string NugetApiUrl = "https://github.com/Antecipa/Innovt.Platform";
 
-    AbsolutePath SourceDirectory => RootDirectory / "src";
-    AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+    private AbsolutePath SourceDirectory => RootDirectory / "src";
+    private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
 
-
-    Target Clean => _ => _
+    private Target Clean => _ => _
         .Executes(() =>
         {
             SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
             EnsureCleanDirectory(ArtifactsDirectory);
         });
 
-    Target Compile => _ => _
+    private Target Compile => _ => _
         .DependsOn(Clean).After()
         .Executes(() =>
         {
@@ -54,8 +52,7 @@ class Build : NukeBuild
                 .SetAuthors("Michel Borges"));
         });
 
-
-    Target Pack => _ => _
+    private Target Pack => _ => _
         .DependsOn(Compile).After()
         .Executes(() =>
         {
@@ -69,14 +66,14 @@ class Build : NukeBuild
             );
         });
 
-    Target Publish => _ => _
+    private Target Publish => _ => _
         .DependsOn(Pack).After()
         .Requires(() => NugetApiUrl)
         .Requires(() => NugetApiKey)
         .Requires(() => Configuration == "Release")
         .Executes(() =>
         {
-            GlobFiles(ArtifactsDirectory / "nuget", "*.nupkg")
+            Globbing.GlobFiles(ArtifactsDirectory / "nuget", "*.nupkg")
                 .NotNull()
                 //.Where(x => x.StartsWith("Innovt.",StringComparison.InvariantCultureIgnoreCase))
                 .ForEach(x =>
@@ -103,5 +100,5 @@ class Build : NukeBuild
     /// - JetBrains Rider            https://nuke.build/rider
     /// - Microsoft VisualStudio     https://nuke.build/visualstudio
     /// - Microsoft VSCode           https://nuke.build/vscode
-    public static int Main() => Execute<Build>(x => x.Publish);
+    public static int Main() => Execute<Build>(x => x.Pack);
 }
