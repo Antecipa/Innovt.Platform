@@ -80,6 +80,7 @@ namespace Innovt.Cloud.AWS.Bridge
                             ScheduleExpression = scheduleExpression,
                             GroupName = scheduleGroupName,
                             Target = target,
+                            ActionAfterCompletion = ActionAfterCompletion.DELETE,
                             FlexibleTimeWindow = flexibleTimeWindow,
                         }, cancellationToken)
                     .ConfigureAwait(false)).ConfigureAwait(false);
@@ -100,13 +101,25 @@ namespace Innovt.Cloud.AWS.Bridge
         public async Task<string> ScheduleQueueMessageAsync<TK>(TK message, string queueName, DateTime dateTime, string scheduleName, string scheduleGroupName = null, int maximumRetryAttempts = 3,
         CancellationToken cancellationToken = default)
         {
-            return await BaseScheduleQueueMessageAsync(message, queueName, $"at({dateTime:yyyy-MM-ddTHH:mm:ss})", scheduleName, scheduleGroupName: scheduleGroupName, maximumRetryAttempts: maximumRetryAttempts, cancellationToken: cancellationToken);
+            return await BaseScheduleQueueMessageAsync(message,
+                                                       queueName,
+                                                       $"at({dateTime:yyyy-MM-ddTHH:mm:ss})",
+                                                       scheduleName,
+                                                       scheduleGroupName: scheduleGroupName,
+                                                       maximumRetryAttempts: maximumRetryAttempts,
+                                                       cancellationToken: cancellationToken);
         }
 
         public async Task<string> ScheduleQueueMessageAsync<TK>(TK message, string queueName, string cronExpression, string scheduleName, string scheduleGroupName = null, int maximumRetryAttempts = 3,
         CancellationToken cancellationToken = default)
         {
-            return await BaseScheduleQueueMessageAsync(message, queueName, cronExpression, scheduleName, scheduleGroupName: scheduleGroupName, maximumRetryAttempts: maximumRetryAttempts, cancellationToken: cancellationToken);
+            return await BaseScheduleQueueMessageAsync(message,
+                                                       queueName,
+                                                       cronExpression,
+                                                       scheduleName,
+                                                       scheduleGroupName: scheduleGroupName,
+                                                       maximumRetryAttempts: maximumRetryAttempts,
+                                                       cancellationToken: cancellationToken);
         }
 
         public async Task DeleteSchedulerAsync(string scheduleName, string scheduleGroupName = null, CancellationToken cancellationToken = default)
