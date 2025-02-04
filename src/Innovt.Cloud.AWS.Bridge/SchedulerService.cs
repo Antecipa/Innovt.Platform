@@ -166,9 +166,11 @@ namespace Innovt.Cloud.AWS.Bridge
             else
             {
                 IAmazonSecurityTokenService stsClient = CreateService<AmazonSecurityTokenServiceClient>();
-                var accountNumber = (await stsClient.GetCallerIdentityAsync(new GetCallerIdentityRequest()).ConfigureAwait(false)).Account;
+                var stsAccount = (await stsClient.GetCallerIdentityAsync(new GetCallerIdentityRequest()).ConfigureAwait(false));
+                var accountNumber = stsAccount.Account;
+                var region = SchedulerClient.Config.RegionEndpoint.SystemName;
 
-                queueArn = $"arn:aws:sqs:{GetServiceRegionEndPoint()?.SystemName ?? RegionEndpoint.USEast1.SystemName}:{accountNumber}:{queueName}";
+                queueArn = $"arn:aws:sqs:{region ?? RegionEndpoint.USEast1.SystemName}:{accountNumber}:{queueName}";
             }
             activity?.SetTag("schedulerService.queue_arn", queueArn);
 
