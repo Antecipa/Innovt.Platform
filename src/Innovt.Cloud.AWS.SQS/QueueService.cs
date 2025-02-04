@@ -152,9 +152,12 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
         var deleteRequest = new DeleteMessageRequest(queueUrl, popReceipt);
 
-        await base.CreateDefaultRetryAsyncPolicy().ExecuteAndCaptureAsync(async () =>
-                await SqsClient.DeleteMessageAsync(deleteRequest, cancellationToken).ConfigureAwait(false))
-            .ConfigureAwait(false);
+        var response = await base.CreateDefaultRetryAsyncPolicy().ExecuteAsync(async () =>
+             await SqsClient.DeleteMessageAsync(deleteRequest, cancellationToken).ConfigureAwait(false))
+         .ConfigureAwait(false);
+
+        if (response.HttpStatusCode != HttpStatusCode.OK)
+            throw new CriticalException("Error deleting message from the queue.");
     }
 
     /// <summary>
