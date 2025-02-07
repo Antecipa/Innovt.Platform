@@ -13,11 +13,11 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="AWSSDK.StepFunctions" Version="3.7.302.67" />
+        <PackageReference Include="AWSSDK.StepFunctions" Version="3.7.403.33" />
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Innovt.Cloud.AWS\Innovt.Cloud.AWS.csproj"/>
+        <ProjectReference Include="..\Innovt.Cloud.AWS\Innovt.Cloud.AWS.csproj" />
     </ItemGroup>
 </Project>
