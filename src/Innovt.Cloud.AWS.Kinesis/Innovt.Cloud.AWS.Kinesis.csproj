@@ -18,8 +18,8 @@
         <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj" />
         <ProjectReference Include="..\Innovt.Domain\Innovt.Domain.csproj" />
         <PackageReference Include="AWSSDK.Kinesis" Version="3.7.402.67" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
-        <PackageReference Include="System.Text.Json" Version="8.0.5" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.1" />
+        <PackageReference Include="System.Text.Json" Version="9.0.1" />
     </ItemGroup>
 
 </Project>

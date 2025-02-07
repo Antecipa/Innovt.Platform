@@ -14,7 +14,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="AWSSDK.S3" Version="3.7.414" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.1" />
     </ItemGroup>
 
     <ItemGroup>
