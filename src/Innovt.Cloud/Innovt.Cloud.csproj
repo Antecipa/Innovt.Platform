@@ -15,17 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="Table\Expressions\**"/>
-        <EmbeddedResource Remove="Table\Expressions\**"/>
-        <None Remove="Table\Expressions\**"/>
+        <Compile Remove="Table\Expressions\**" />
+        <EmbeddedResource Remove="Table\Expressions\**" />
+        <None Remove="Table\Expressions\**" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj"/>
-    </ItemGroup>
-    <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+        <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj" />
     </ItemGroup>
 </Project>
