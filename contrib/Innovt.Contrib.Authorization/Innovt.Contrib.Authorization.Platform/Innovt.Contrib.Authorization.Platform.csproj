@@ -13,7 +13,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.405.17" />
+        <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.1" />
     </ItemGroup>
 
     <ItemGroup>

@@ -14,8 +14,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Amazon.Lambda.KinesisEvents" Version="2.2.0" />
-        <PackageReference Include="System.Text.Json" Version="9.0.1" />
+        <PackageReference Include="Amazon.Lambda.KinesisEvents" Version="3.0.0" />
+        <PackageReference Include="System.Text.Json" Version="9.0.5" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Innovt.Cloud.AWS.Lambda\Innovt.Cloud.AWS.Lambda.csproj" />

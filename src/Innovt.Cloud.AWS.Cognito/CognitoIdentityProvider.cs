@@ -2,6 +2,17 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Cognito
 
+using Amazon.CognitoIdentityProvider;
+using Amazon.CognitoIdentityProvider.Model;
+using Innovt.Cloud.AWS.Cognito.Exceptions;
+using Innovt.Cloud.AWS.Cognito.Model;
+using Innovt.Cloud.AWS.Cognito.Resources;
+using Innovt.Cloud.AWS.Configuration;
+using Innovt.Core.CrossCutting.Log;
+using Innovt.Core.Exceptions;
+using Innovt.Core.Http;
+using Innovt.Core.Utilities;
+using Innovt.Core.Validation;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,17 +25,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.CognitoIdentityProvider;
-using Amazon.CognitoIdentityProvider.Model;
-using Innovt.Cloud.AWS.Cognito.Exceptions;
-using Innovt.Cloud.AWS.Cognito.Model;
-using Innovt.Cloud.AWS.Cognito.Resources;
-using Innovt.Cloud.AWS.Configuration;
-using Innovt.Core.CrossCutting.Log;
-using Innovt.Core.Exceptions;
-using Innovt.Core.Http;
-using Innovt.Core.Utilities;
-using Innovt.Core.Validation;
 using AdminUpdateUserAttributesRequest = Innovt.Cloud.AWS.Cognito.Model.AdminUpdateUserAttributesRequest;
 using ChangePasswordRequest = Innovt.Cloud.AWS.Cognito.Model.ChangePasswordRequest;
 using CodeMismatchException = Amazon.CognitoIdentityProvider.Model.CodeMismatchException;
@@ -117,7 +117,6 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             throw CatchException(ex);
         }
     }
-
 
     /// <summary>
     ///     Signs in a user with the provided request for OTP process authentication.
@@ -242,7 +241,6 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         var excludedProperties = new[]
             { "password", "username", "ipaddress", "serverpath", "servername", "httpheader", "customattributes" };
 
-
         var properties = command.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(p => !excludedProperties.Contains(p.Name.ToLower(cultureInfo)));
 
@@ -264,10 +262,10 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
                     await CognitoProvider.SignUpAsync(signUpRequest, cancellationToken).ConfigureAwait(false))
                 .ConfigureAwait(false);
 
-            if (!response.UserConfirmed)
+            if (!response.UserConfirmed.GetValueOrDefault())
                 response.UserConfirmed = await ConfirmUserIfHasSocialUser(signUpRequest.Username, cancellationToken);
 
-            return new SignUpResponse { Confirmed = response.UserConfirmed, UUID = response.UserSub };
+            return new SignUpResponse { Confirmed = response.UserConfirmed.GetValueOrDefault(), UUID = response.UserSub };
         }
         catch (Exception ex)
         {
@@ -465,8 +463,8 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
 
             user.UserName = cognitoUser.Username;
             user.Status = cognitoUser.UserStatus.ToString(cultureInfo);
-            user.UserCreateDate = cognitoUser.UserCreateDate;
-            user.UserLastModifiedDate = cognitoUser.UserLastModifiedDate;
+            user.UserCreateDate = cognitoUser.UserCreateDate.GetValueOrDefault(DateTime.UtcNow);
+            user.UserLastModifiedDate = cognitoUser.UserLastModifiedDate.GetValueOrDefault(DateTime.UtcNow);
 
             ParseUserAttributes(ref user, cognitoUser.Attributes);
 
@@ -561,12 +559,15 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             case "CUSTOM_CHALLENGE":
                 challengeResponses.Add("ANSWER", command.ConfirmationCode);
                 break;
+
             case "SMS_MFA":
                 challengeResponses.Add("SMS_MFA_CODE", command.ConfirmationCode);
                 break;
+
             case "NEW_PASSWORD_REQUIRED":
                 challengeResponses.Add("NEW_PASSWORD", command.Password);
                 break;
+
             default:
                 throw new CriticalException(ErrorCode.ChallengeNotAvailable);
         }
@@ -599,7 +600,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
                 {
                     IdToken = response.AuthenticationResult.IdToken,
                     AccessToken = response.AuthenticationResult.AccessToken,
-                    ExpiresIn = response.AuthenticationResult.ExpiresIn,
+                    ExpiresIn = response.AuthenticationResult.ExpiresIn.GetValueOrDefault(),
                     TokenType = response.AuthenticationResult.TokenType,
                     RefreshToken = response.AuthenticationResult.RefreshToken,
                     SignInType = "USER_PASSWORD_AUTH"
@@ -723,7 +724,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             var socialUser = await base.CreateDefaultRetryAsyncPolicy().ExecuteAsync(async () =>
                 await CognitoProvider.GetUserAsync(
                     new Amazon.CognitoIdentityProvider.Model.GetUserRequest
-                        { AccessToken = response.AccessToken },
+                    { AccessToken = response.AccessToken },
                     cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             if (socialUser == null)
@@ -737,7 +738,6 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
 
             response.NeedRegister = !hasCognitoUser;
             response.SignInType = GetSocialProviderName(socialUser.Username);
-
 
             response.FirstName = GetUserAttributeValue(socialUser.UserAttributes, "name");
             response.LastName = GetUserAttributeValue(socialUser.UserAttributes, "family_name");
@@ -805,7 +805,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             {
                 IdToken = response.AuthenticationResult.IdToken,
                 AccessToken = response.AuthenticationResult.AccessToken,
-                ExpiresIn = response.AuthenticationResult.ExpiresIn,
+                ExpiresIn = response.AuthenticationResult.ExpiresIn.GetValueOrDefault(),
                 TokenType = response.AuthenticationResult.TokenType
             };
         }
@@ -814,7 +814,6 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             throw CatchException(ex);
         }
     }
-
 
     /// <summary>
     ///     Link user and social account. This is used to avoid billing issues and other problems.
@@ -867,7 +866,6 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             var result = await base.CreateDefaultRetryAsyncPolicy().ExecuteAsync(async () =>
                 await CognitoProvider.AdminLinkProviderForUserAsync(request, cancellationToken
                 )).ConfigureAwait(false);
-
 
             return result.HttpStatusCode == HttpStatusCode.OK;
         }
@@ -978,7 +976,6 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         }
     }
 
-
     /// <summary>
     ///     This implementation is to avoid users with social login to confirm the user.
     /// </summary>
@@ -1031,9 +1028,11 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
                 case "name":
                     user.FirstName = userAttribute.Value;
                     break;
+
                 case "family_name":
                     user.LastName = userAttribute.Value;
                     break;
+
                 default:
 
                     var propInfo = typeof(T).GetProperty(userAttribute.Name,
@@ -1153,7 +1152,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
                 {
                     IdToken = response.AuthenticationResult.IdToken,
                     AccessToken = response.AuthenticationResult.AccessToken,
-                    ExpiresIn = response.AuthenticationResult.ExpiresIn,
+                    ExpiresIn = response.AuthenticationResult.ExpiresIn.GetValueOrDefault(),
                     TokenType = response.AuthenticationResult.TokenType,
                     RefreshToken = response.AuthenticationResult.RefreshToken,
                     SignInType = "USER_PASSWORD_AUTH"
