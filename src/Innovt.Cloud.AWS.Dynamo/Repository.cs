@@ -2,12 +2,6 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Dynamo
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
@@ -17,6 +11,12 @@ using Innovt.Core.Collections;
 using Innovt.Core.CrossCutting.Log;
 using Innovt.Core.Exceptions;
 using Polly.Retry;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using BatchGetItemRequest = Innovt.Cloud.Table.BatchGetItemRequest;
 using BatchWriteItemRequest = Innovt.Cloud.Table.BatchWriteItemRequest;
 using BatchWriteItemResponse = Innovt.Cloud.Table.BatchWriteItemResponse;
@@ -429,7 +429,6 @@ public abstract class Repository : AwsBaseService, ITableRepository
         foreach (var transactItem in request.TransactItems)
             transactRequest.TransactItems.Add(Helpers.CreateTransactionWriteItem(transactItem));
 
-
         await DynamoClient.TransactWriteItemsAsync(transactRequest, cancellationToken).ConfigureAwait(false);
     }
 
@@ -503,7 +502,6 @@ public abstract class Repository : AwsBaseService, ITableRepository
                     NextToken = sqlStatementRequest.NextToken,
                     Statement = sqlStatementRequest.Statment
                 }, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
-
 
             if (response is null)
                 return null;
@@ -655,8 +653,7 @@ public abstract class Repository : AwsBaseService, ITableRepository
     /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
     /// <returns>A tuple containing the last evaluated key and the list of items retrieved.</returns>
     /// <exception cref="ArgumentNullException">Thrown when request is null.</exception>
-    private async
-        Task<(Dictionary<string, AttributeValue> LastEvaluatedKey, IList<Dictionary<string, AttributeValue>> Items)>
+    private async Task<(Dictionary<string, AttributeValue> LastEvaluatedKey, IList<Dictionary<string, AttributeValue>> Items)>
         InternalQueryAsync<T>(QueryRequest request, CancellationToken cancellationToken = default)
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
@@ -686,7 +683,7 @@ public abstract class Repository : AwsBaseService, ITableRepository
                 remaining = remaining.HasValue ? request.PageSize - items.Count : 0;
 
                 if (remaining > 0) queryRequest.Limit = remaining.Value;
-            } while (lastEvaluatedKey.Count > 0 && remaining > 0);
+            } while (lastEvaluatedKey != null && lastEvaluatedKey.Count > 0 && remaining > 0);
 
             return (lastEvaluatedKey, items);
         }
