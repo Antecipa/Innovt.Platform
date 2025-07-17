@@ -45,8 +45,8 @@ internal class Build : NukeBuild
             DotNetBuild(_ => _
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)
-                .SetAssemblyVersion(GitVersion.AssemblySemVer)
-                .SetFileVersion(GitVersion.AssemblySemFileVer)
+                .SetAssemblyVersion("0.1.0.0")
+                .SetFileVersion("0.1.0.0")
                 .SetInformationalVersion(GitVersion.InformationalVersion)
                 .ClearWarningsAsErrors()
                 .SetAuthors("Michel Borges"));
