@@ -18,7 +18,7 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 internal class Build : NukeBuild
 {
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    private readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    private readonly Configuration Configuration = Configuration.Release;
 
     [GitRepository] private readonly GitRepository GitRepository;
     [GitVersion] private readonly GitVersion GitVersion;
