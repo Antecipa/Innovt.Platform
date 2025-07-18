@@ -38,7 +38,7 @@ public static class SimpleMapper
             var outProperty =
                 outputProperties.LastOrDefault(p => p.Name == property.Name && p.PropertyType == property.PropertyType);
 
-            if (outProperty != null && outProperty.PropertyType == property.PropertyType)
+            if (outProperty != null && outProperty.PropertyType == property.PropertyType && outProperty.CanWrite)
                 outProperty.SetValue(output, property.GetValue(input, null), null);
         }
 
