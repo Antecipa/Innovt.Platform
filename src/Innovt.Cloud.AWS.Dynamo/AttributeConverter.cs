@@ -2,6 +2,11 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.Dynamo
 
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
+using Innovt.Core.Collections;
+using Innovt.Core.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,11 +15,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
-using Amazon.DynamoDBv2.Model;
-using Innovt.Core.Collections;
-using Innovt.Core.Utilities;
 
 namespace Innovt.Cloud.AWS.Dynamo;
 
@@ -48,7 +48,6 @@ internal static class AttributeConverter
         typeof(MemoryStream),
         typeof(Primitive)
     };
-
 
     private static readonly HashSet<TypeInfo> PrimitiveTypeInfos =
     [
@@ -113,34 +112,41 @@ internal static class AttributeConverter
         {
             case null:
                 return new AttributeValue { NULL = true };
+
             case MemoryStream stream:
                 return new AttributeValue { B = stream };
+
             case bool:
                 return new AttributeValue { BOOL = bool.Parse(value.ToString()) };
+
             case List<MemoryStream> streams:
                 return new AttributeValue { BS = streams };
+
             case List<string> list:
                 return new AttributeValue { SS = list };
+
             case int or double or float or decimal or long:
                 return new AttributeValue { N = value.ToString() };
+
             case DateTime time:
                 return new AttributeValue { S = time.ToString("s") };
+
             case IList<int> or IList<double> or IList<float> or IList<decimal> or IList<long>:
-            {
-                var array = (value as IList).Cast<object>().Select(o => o.ToString()).ToList();
+                {
+                    var array = (value as IList).Cast<object>().Select(o => o.ToString()).ToList();
 
-                return new AttributeValue { NS = array };
-            }
+                    return new AttributeValue { NS = array };
+                }
             case IDictionary<string, object> objects:
-            {
-                var array = objects.ToDictionary(item => item.Key, item => CreateAttributeValue(item.Value));
+                {
+                    var array = objects.ToDictionary(item => item.Key, item => CreateAttributeValue(item.Value));
 
-                return new AttributeValue { M = array };
-            }
+                    return new AttributeValue { M = array };
+                }
             case IList<object> objects:
-            {
-                return new AttributeValue { L = objects.Select(CreateAttributeValue).ToList() };
-            }
+                {
+                    return new AttributeValue { L = objects.Select(CreateAttributeValue).ToList() };
+                }
             default:
                 return new AttributeValue(value.ToString());
         }
@@ -303,7 +309,6 @@ internal static class AttributeConverter
 
         if (method == null) return null;
 
-
         foreach (var obj in items)
             method.Invoke(result, new object[1]
             {
@@ -391,7 +396,7 @@ internal static class AttributeConverter
             return new DynamoDBNull();
 
         if (attributeValue.IsBOOLSet)
-            return new DynamoDBBool(attributeValue.BOOL);
+            return new DynamoDBBool(attributeValue.BOOL.GetValueOrDefault());
 
         if (attributeValue.B is not null)
             return new Primitive(attributeValue.B);
@@ -417,7 +422,7 @@ internal static class AttributeConverter
         if (property.PropertyType.IsEnum)
             return Enum.Parse(property.PropertyType, value.ToString(), true);
 
-        //has converter? 
+        //has converter?
         var customConverter = property.GetCustomAttributes<DynamoDBPropertyAttribute>()
             .SingleOrDefault(a => a.Converter != null);
 

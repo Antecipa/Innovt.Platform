@@ -64,7 +64,7 @@ public abstract class KinesisProcessorBase<TBody> : EventProcessor<KinesisEvent,
     protected async Task<TBody> ParseRecord(KinesisEvent.KinesisEventRecord record)
     {
         if (record == null) throw new ArgumentNullException(nameof(record));
-        
+
         if (record.Kinesis.Data is null)
             throw new CriticalException($"Kinesis Data for EventId {record.EventId} is null");
 
@@ -79,7 +79,7 @@ public abstract class KinesisProcessorBase<TBody> : EventProcessor<KinesisEvent,
         if (body != null)
         {
             body.EventId = record.EventId;
-            body.ApproximateArrivalTimestamp = record.Kinesis.ApproximateArrivalTimestamp;
+            body.ApproximateArrivalTimestamp = record.Kinesis.ApproximateArrivalTimestamp.GetValueOrDefault(DateTime.UtcNow);
             body.Partition ??= record.Kinesis.PartitionKey;
         }
 

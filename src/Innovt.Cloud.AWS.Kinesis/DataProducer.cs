@@ -84,6 +84,8 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
 
         foreach (var data in dataStreams)
         {
+            if (data is null) continue;
+
             if (data.TraceId.IsNullOrEmpty() && activity != null)
             {
                 data.TraceId = activity.Id.ToString();
@@ -94,14 +96,11 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
 
             var dataAsBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize<object>(data));
 
-            using (var ms = new MemoryStream(dataAsBytes))
+            request.Add(new PutRecordsRequestEntry
             {
-                request.Add(new PutRecordsRequestEntry
-                {
-                    Data = ms,
-                    PartitionKey = data.Partition
-                });
-            }
+                Data = new MemoryStream(dataAsBytes),
+                PartitionKey = data.Partition
+            });
         }
 
         return request;
@@ -116,7 +115,6 @@ public class DataProducer<T> : AwsBaseService where T : class, IDataStream
     {
         if (dataList is null || !dataList.Any())
         {
-            Logger.Info("The event list is empty or null.");
             return;
         }
 

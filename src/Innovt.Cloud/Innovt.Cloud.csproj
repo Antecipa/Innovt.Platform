@@ -2,7 +2,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <PackageId>Innovt.Cloud</PackageId>
-        <PackageVersion>8.1.7</PackageVersion>
+        <PackageVersion>8.2.3</PackageVersion>
         <Authors>Michel Borges</Authors>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -15,17 +15,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="Table\Expressions\**"/>
-        <EmbeddedResource Remove="Table\Expressions\**"/>
-        <None Remove="Table\Expressions\**"/>
+        <Compile Remove="Table\Expressions\**" />
+        <EmbeddedResource Remove="Table\Expressions\**" />
+        <None Remove="Table\Expressions\**" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj"/>
-    </ItemGroup>
-    <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+        <ProjectReference Include="..\Innovt.Core\Innovt.Core.csproj" />
     </ItemGroup>
 </Project>
