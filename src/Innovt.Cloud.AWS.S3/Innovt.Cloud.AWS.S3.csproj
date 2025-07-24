@@ -13,7 +13,7 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="AWSSDK.S3" Version="4.0.5" />
+        <PackageReference Include="AWSSDK.S3" Version="4.0.6.2" />
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.7" />
     </ItemGroup>
 

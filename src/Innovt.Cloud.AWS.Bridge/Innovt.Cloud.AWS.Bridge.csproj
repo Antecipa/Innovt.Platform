@@ -14,7 +14,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.Scheduler" Version="4.0.0.14" />
+		<PackageReference Include="AWSSDK.Scheduler" Version="4.0.0.15" />
 		<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.7" />
 	</ItemGroup>
 
