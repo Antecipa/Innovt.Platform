@@ -227,16 +227,21 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             {
                 EncodedData =
                     $"IP:{command.IpAddress};ServerPath:{command.ServerPath};ServerName:{command.ServerName}"
-            }
+            },
+            UserAttributes = []
         };
 
         if (command.CustomAttributes != null)
+        {
             foreach (var attribute in command.CustomAttributes)
+            {
                 signUpRequest.UserAttributes.Add(new AttributeType
                 {
                     Name = $"custom:{attribute.Key}",
                     Value = attribute.Value
                 });
+            }
+        }
 
         var excludedProperties = new[]
             { "password", "username", "ipaddress", "serverpath", "servername", "httpheader", "customattributes" };
@@ -786,7 +791,8 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             {
                 EncodedData =
                     $"IP:{command.IpAddress};ServerPath:{command.ServerPath};ServerName:{command.ServerName}"
-            }
+            },
+            AuthParameters = []
         };
 
         authRequest.AuthParameters.Add("REFRESH_TOKEN", command.RefreshToken);
@@ -954,7 +960,8 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         using var activity = CognitoIdentityProviderActivitySource.StartActivity();
         var updateUserAttributeRequest = new Amazon.CognitoIdentityProvider.Model.UpdateUserAttributesRequest
         {
-            AccessToken = command.AccessToken
+            AccessToken = command.AccessToken,
+            UserAttributes = []
         };
 
         foreach (var (key, value) in command.Attributes)
@@ -1022,7 +1029,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         if (user is null) return;
         if (userAttributes is null) return;
 
-        foreach (var userAttribute in userAttributes.Where(userAttribute => userAttribute.Name != null))
+        foreach (var userAttribute in userAttributes.Where(userAttribute => userAttribute?.Name != null))
             switch (userAttribute.Name)
             {
                 case "name":
@@ -1137,8 +1144,11 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         authRequest.AuthParameters.Add("USERNAME", request.UserName.Trim().ToLower(cultureInfo));
 
         if (authParameters != null)
+        {
+            authRequest.AuthParameters ??= [];
             foreach (var (key, value) in authParameters)
                 authRequest.AuthParameters.Add(key, value);
+        }
 
         try
         {

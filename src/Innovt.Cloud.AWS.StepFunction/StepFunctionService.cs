@@ -2,16 +2,16 @@
 // Author: Michel Borges
 // Project: Innovt.Cloud.AWS.StepFunction
 
-using System;
-using System.Diagnostics;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Amazon.StepFunctions;
 using Amazon.StepFunctions.Model;
 using Innovt.Cloud.AWS.Configuration;
 using Innovt.Cloud.StateMachine;
 using Innovt.Core.CrossCutting.Log;
+using System;
+using System.Diagnostics;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Innovt.Cloud.AWS.StepFunction;
 
@@ -110,15 +110,15 @@ public class StepFunctionService : AwsBaseService, IStateMachine
     ///     Sends a failure response for a task in the state machine.
     /// </summary>
     /// <param name="taskToken">The token for the task.</param>
-    /// <param name="reason">The reason for the failure.</param>
-    /// <param name="taskError">The error associated with the failure.</param>
+    /// <param name="cause">A more detailed explanation of the cause of the failure.</param>
+    /// <param name="errorMessage">The error associated with the failure.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task SendTaskFailure(string taskToken, string reason, string taskError,
+    public async Task SendTaskFailure(string taskToken, string cause, string errorMessage,
         CancellationToken cancellationToken)
     {
         if (taskToken == null) throw new ArgumentNullException(nameof(taskToken));
-        if (reason == null) throw new ArgumentNullException(nameof(reason));
+        if (cause == null) throw new ArgumentNullException(nameof(cause));
 
         using var activity = StepFunctionActivitySource.StartActivity();
         activity?.SetTag("StateMachine.SendTaskFailure", taskToken);
@@ -129,8 +129,8 @@ public class StepFunctionService : AwsBaseService, IStateMachine
                 await StepFunctionClient.SendTaskFailureAsync(new SendTaskFailureRequest
                 {
                     TaskToken = taskToken,
-                    Cause = reason,
-                    Error = taskError
+                    Cause = cause,
+                    Error = errorMessage
                 }, cancellationToken).ConfigureAwait(false))
             .ConfigureAwait(false);
     }

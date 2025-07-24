@@ -726,7 +726,7 @@ public abstract class Repository : AwsBaseService, ITableRepository
                 remaining = remaining.HasValue ? request.PageSize - items.Count : 0;
 
                 if (remaining > 0) scanRequest.Limit = remaining.Value;
-            } while (lastEvaluatedKey.Count > 0 && remaining > 0);
+            } while (lastEvaluatedKey != null && lastEvaluatedKey.Count > 0 && remaining > 0);
 
             return (lastEvaluatedKey, items);
         }

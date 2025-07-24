@@ -235,6 +235,7 @@ internal static class Helpers
         if (request is null) throw new ArgumentNullException(nameof(request));
 
         var result = new Dictionary<string, KeysAndAttributes>();
+        if (request.Items == null) return result;
 
         foreach (var item in request.Items)
             result.Add(item.Key, new KeysAndAttributes
@@ -275,15 +276,15 @@ internal static class Helpers
         foreach (var item in request.Items)
         {
             var writeRequests = (from r in item.Value
-                select new WriteRequest
-                {
-                    DeleteRequest = r.DeleteRequest is null
-                        ? null
-                        : new DeleteRequest(AttributeConverter.ConvertToAttributeValues(r.DeleteRequest)),
-                    PutRequest = r.PutRequest is null
-                        ? null
-                        : new PutRequest(AttributeConverter.ConvertToAttributeValues(r.PutRequest))
-                }).ToList();
+                                 select new WriteRequest
+                                 {
+                                     DeleteRequest = r.DeleteRequest is null
+                                         ? null
+                                         : new DeleteRequest(AttributeConverter.ConvertToAttributeValues(r.DeleteRequest)),
+                                     PutRequest = r.PutRequest is null
+                                         ? null
+                                         : new PutRequest(AttributeConverter.ConvertToAttributeValues(r.PutRequest))
+                                 }).ToList();
 
             writeRequest.RequestItems.Add(item.Key, writeRequests);
         }

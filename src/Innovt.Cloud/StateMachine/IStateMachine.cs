@@ -35,11 +35,11 @@ public interface IStateMachine
     ///     Sends a failure signal for a task to the state machine.
     /// </summary>
     /// <param name="taskToken">The token representing the task.</param>
-    /// <param name="reason">The reason for task failure.</param>
-    /// <param name="taskError">The error associated with the task failure.</param>
+    /// <param name="cause">A more detailed explanation of the cause of the failure.</param>
+    /// <param name="errorMessage">The error associated with the failure.</param>
     /// <param name="cancellationToken">The cancellation token to cancel the asynchronous operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task SendTaskFailure(string taskToken, string reason, string taskError, CancellationToken cancellationToken);
+    Task SendTaskFailure(string taskToken, string cause, string errorMessage, CancellationToken cancellationToken);
 
     /// <summary>
     ///     Sends a heartbeat signal for a task to the state machine.
