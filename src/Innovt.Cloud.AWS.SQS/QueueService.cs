@@ -281,7 +281,6 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         var result = new List<MessageQueueResult>();
 
         activity?.SetTag("sqs.status_code", response.HttpStatusCode);
-        activity?.SetTag("sqs.status_code", response.Failed);
 
         if (response.Successful != null)
             foreach (var item in response.Successful)
@@ -299,6 +298,28 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         }
 
         return result;
+    }
+
+    public async Task ChangeMessageVisibilityTimeout(string receiptHandle, int visibilityTimeoutInSeconds, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(receiptHandle))
+            throw new ArgumentNullException(nameof(receiptHandle));
+
+        if (visibilityTimeoutInSeconds <= 0)
+            throw new ArgumentOutOfRangeException(nameof(visibilityTimeoutInSeconds), "Visibility timeout must be greater than zero.");
+
+        using var activity = Activity.Current;
+        activity?.SetTag("sqs.visibility_timeout_seconds", visibilityTimeoutInSeconds);
+
+        var queueUrl = await GetQueueUrlAsync().ConfigureAwait(false);
+
+        var response = await base.CreateDefaultRetryAsyncPolicy()
+            .ExecuteAsync(async () =>
+                await SqsClient.ChangeMessageVisibilityAsync(queueUrl, receiptHandle, visibilityTimeoutInSeconds, cancellationToken).ConfigureAwait(false))
+            .ConfigureAwait(false);
+
+        if (response.HttpStatusCode != HttpStatusCode.OK)
+            throw new CriticalException("Error changing message visibility timeout in the queue.");
     }
 
     /// <summary>

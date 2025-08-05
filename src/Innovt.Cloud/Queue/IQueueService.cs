@@ -67,4 +67,13 @@ public interface IQueueService<T> where T : IQueueMessage
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task CreateIfNotExistAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Changes the visibility timeout of a message in the queue asynchronously.
+    /// </summary>
+    /// <param name="receiptHandle">The message id to be changes visibility timeout</param>
+    /// <param name="visibilityTimeoutInSeconds">The duration for which the enqueued message is invisible to other consumers.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns></returns>
+    Task ChangeMessageVisibilityTimeout(string receiptHandle, int visibilityTimeoutInSeconds, CancellationToken cancellationToken = default);
 }
