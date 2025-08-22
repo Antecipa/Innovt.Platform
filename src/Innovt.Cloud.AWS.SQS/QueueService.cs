@@ -221,12 +221,13 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         var messageRequest = new SendMessageRequest
         {
             MessageBody = Serializer.SerializeObject(message),
-            QueueUrl = await GetQueueUrlAsync().ConfigureAwait(false)
+            QueueUrl = await GetQueueUrlAsync().ConfigureAwait(false),
+            MessageAttributes = new Dictionary<string, MessageAttributeValue>()
         };
 
         activity?.SetTag("sqs.queue_url", messageRequest.QueueUrl);
 
-        EnrichMessage(activity, messageRequest);
+        EnrichMessageAttributes(activity, messageRequest.MessageAttributes);
 
         if (visibilityTimeoutInSeconds.HasValue)
             messageRequest.DelaySeconds = visibilityTimeoutInSeconds.Value;
@@ -266,12 +267,19 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         };
 
         foreach (var item in message)
-            messageRequest.Entries.Add(new SendMessageBatchRequestEntry
+        {
+            var messageBatchItem = new SendMessageBatchRequestEntry
             {
                 Id = item.Id,
                 DelaySeconds = delaySeconds.GetValueOrDefault(),
-                MessageBody = Serializer.SerializeObject(item.Message)
-            });
+                MessageBody = Serializer.SerializeObject(item.Message),
+                MessageAttributes = new Dictionary<string, MessageAttributeValue>()
+            };
+
+            EnrichMessageAttributes(activity, messageBatchItem.MessageAttributes);
+
+            messageRequest.Entries.Add(messageBatchItem);
+        }
 
         var response = await base.CreateDefaultRetryAsyncPolicy()
             .ExecuteAsync(async () =>
@@ -302,30 +310,31 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     }
 
     /// <summary>
-    ///     Enriches the message request with additional attributes based on the activity.
+    ///
     /// </summary>
-    /// <param name="activity">The activity associated with the message.</param>
-    /// <param name="messageRequest">The message request to be enriched.</param>
-    private static void EnrichMessage(Activity activity, SendMessageRequest messageRequest)
+    /// <param name="activity"></param>
+    /// <param name="messageAttribute"></param>
+    private static void EnrichMessageAttributes(Activity activity, Dictionary<string, MessageAttributeValue> messageAttribute)
     {
         if (activity == null) return;
+        messageAttribute ??= [];
 
         if (!string.IsNullOrEmpty(activity.Id))
-            messageRequest.MessageAttributes.TryAdd("TraceId", new MessageAttributeValue
+            messageAttribute.TryAdd("TraceId", new MessageAttributeValue
             {
                 StringValue = activity.Id,
                 DataType = "String",
             });
 
         if (!string.IsNullOrEmpty(activity.ParentId))
-            messageRequest.MessageAttributes.TryAdd("ParentId", new MessageAttributeValue
+            messageAttribute.TryAdd("ParentId", new MessageAttributeValue
             {
                 StringValue = activity.ParentId,
                 DataType = "String",
             });
 
         if (string.IsNullOrEmpty(activity.RootId))
-            messageRequest.MessageAttributes.TryAdd("RootTraceId", new MessageAttributeValue
+            messageAttribute.TryAdd("RootTraceId", new MessageAttributeValue
             {
                 StringValue = activity.RootId,
                 DataType = "String",
@@ -356,7 +365,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     private void ParseQueueMessageAttributes(IQueueMessage queueMessage,
      Dictionary<string, MessageAttributeValue> queueAttributes)
     {
-        if (queueMessage is null || queueAttributes == null)
+        if (queueMessage == null || queueAttributes == null)
             return;
 
         if (queueAttributes.ContainsKey("TraceId"))
