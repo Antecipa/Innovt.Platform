@@ -13,8 +13,8 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="AWSSDK.SQS" Version="4.0.0.16" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.7" />
+        <PackageReference Include="AWSSDK.SQS" Version="4.0.1.8" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.9" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Innovt.Cloud.AWS\Innovt.Cloud.AWS.csproj" />

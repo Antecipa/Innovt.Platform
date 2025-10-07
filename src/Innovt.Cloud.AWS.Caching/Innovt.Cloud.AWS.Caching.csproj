@@ -15,8 +15,9 @@
 
     <ItemGroup>
         <PackageReference Include="ServiceStack.Redis" Version="8.8.0" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.7" />
-        <PackageReference Include="System.Text.Json" Version="9.0.7" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.9" />
+        <PackageReference Include="System.Text.Json" Version="9.0.9" />
+        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Innovt.Cloud.AWS\Innovt.Cloud.AWS.csproj" />
