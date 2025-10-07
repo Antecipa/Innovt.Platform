@@ -166,7 +166,6 @@ public static class StringExtensions
         return cnpj.EndsWith(digit);
     }
 
-
     /// <summary>
     ///     Determines whether a Guid is empty (all zeros).
     /// </summary>
@@ -203,6 +202,16 @@ public static class StringExtensions
     /// <param name="str">The string to check.</param>
     /// <returns>True if the string is null, empty, or consists only of white-space characters; otherwise, false.</returns>
     public static bool IsNullOrEmpty(this string str)
+    {
+        return string.IsNullOrWhiteSpace(str);
+    }
+
+    /// <summary>
+    ///     Determines whether a string is null, empty, or consists only of white-space characters.
+    /// </summary>
+    /// <param name="str">The string to check.</param>
+    /// <returns>True if the string is null, empty, or consists only of white-space characters; otherwise, false.</returns>
+    public static bool IsNullOrWhiteSpace(this string str)
     {
         return string.IsNullOrWhiteSpace(str);
     }
@@ -524,7 +533,6 @@ public static class StringExtensions
         return string.Format(mascara, lgValue);
     }
 
-
     /// <summary>
     ///     Encode your string to Base64
     /// </summary>
@@ -636,7 +644,6 @@ public static class StringExtensions
         if (decimal.TryParse(str, out var value))
             return value;
 
-
         return defaultValue;
     }
 
@@ -654,7 +661,6 @@ public static class StringExtensions
         if (double.TryParse(str, out var value))
             return value;
 
-
         return defaultValue;
     }
 
@@ -671,7 +677,6 @@ public static class StringExtensions
 
         if (double.TryParse(str, out var value))
             return value;
-
 
         return defaultValue;
     }
@@ -779,7 +784,6 @@ public static class StringExtensions
 
         return defaultValue;
     }
-
 
     /// <summary>
     ///     Converts a string to a DateTimeOffset, using a specified default value if the string is null or empty.

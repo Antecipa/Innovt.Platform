@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
 using System.Net;
@@ -95,9 +96,15 @@ public static class MvcExtensions
     /// <param name="validateIssuer">Whether to validate issuer.</param>
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
-    public static void AddBearerAuthorization(this IServiceCollection services, IConfiguration configuration,
-        string configSection = "BearerAuthentication", bool validateAudience = false,
-        bool validateIssuer = true, bool validateLifetime = true, bool validateIssuerSigningKey = true)
+    public static void AddBearerAuthorization(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "BearerAuthentication",
+        bool validateAudience = true,
+        bool validateIssuer = true,
+        bool validateLifetime = true,
+        bool validateIssuerSigningKey = true,
+        JwtBearerEvents jwtBearerEvents = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -110,8 +117,15 @@ public static class MvcExtensions
         if (authoritySection.Value == null)
             throw new CriticalException($"The Config Section '{configSection}:Authority' not defined.");
 
-        services.AddBearerAuthorization(audienceSection.Value, authoritySection.Value, validateAudience, validateIssuer,
-            validateLifetime, validateIssuerSigningKey, audiences);
+        services.AddBearerAuthorization(
+            audienceSection.Value,
+            authoritySection.Value,
+            validateAudience: validateAudience,
+            validateIssuer: validateIssuer,
+            validateLifetime: validateLifetime,
+            validateIssuerSigningKey: validateIssuerSigningKey,
+            validAudiences: audiences,
+            jwtBearerEvents: jwtBearerEvents);
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
@@ -126,11 +140,20 @@ public static class MvcExtensions
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
     /// <param name="validAudiences">The valid token audiences if you want to validate it.</param>
-    public static void AddBearerAuthorization(this IServiceCollection services, string audienceId, string authority,
-        bool validateAudience = false,
-        bool validateIssuer = true, bool validateLifetime = true, bool validateIssuerSigningKey = true,
-        string[]? validAudiences = null)
+    public static void AddBearerAuthorization(
+        this IServiceCollection services,
+        string audienceId,
+        string authority,
+        bool validateAudience = true,
+        bool validateIssuer = true,
+        bool validateLifetime = true,
+        bool validateIssuerSigningKey = true,
+        string[]? validAudiences = null,
+        JwtBearerEvents jwtBearerEvents = null)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrEmpty(audienceId);
+        ArgumentException.ThrowIfNullOrEmpty(authority);
         services.AddAuthorization(options =>
         {
             options.DefaultPolicy = new AuthorizationPolicyBuilder()
@@ -138,27 +161,63 @@ public static class MvcExtensions
                 .RequireAuthenticatedUser().Build();
         });
 
+        if (validateAudience && (validAudiences == null || validAudiences.Length == 0) && !string.IsNullOrWhiteSpace(audienceId))
+        {
+            validAudiences ??= [];
+            validAudiences = [.. validAudiences, audienceId];
+        }
+
         services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.Audience = audienceId;
+            options.Authority = authority;
+            options.RequireHttpsMetadata = false;
+            options.IncludeErrorDetails = true;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.Audience = audienceId;
-                options.Authority = authority;
-                options.RequireHttpsMetadata = false;
-                options.IncludeErrorDetails = true;
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
+                ValidateIssuerSigningKey = validateIssuerSigningKey,
+                ValidateAudience = validateAudience,
+                ValidAudiences = validAudiences,
+                ValidateIssuer = validateIssuer,
+                ValidIssuer = validateIssuer ? authority : null,
+                ValidateLifetime = validateLifetime,
+                AudienceValidator = validateAudience ? (audiences, securityToken, validationParameters) =>
                 {
-                    ValidateIssuerSigningKey = validateIssuerSigningKey,
-                    ValidateAudience = validateAudience,
-                    ValidAudiences = validAudiences,
-                    ValidateIssuer = validateIssuer,
-                    ValidateLifetime = validateLifetime
-                };
-            });
+                    if (securityToken is JsonWebToken jwtToken)
+                    {
+                        try
+                        {
+                            if (jwtToken.TryGetClaim("aud", out var audClaim) && !string.IsNullOrEmpty(audClaim.Value))
+                            {
+                                return audClaim.Value == audienceId ||
+                                        (validAudiences?.Contains(audClaim.Value) == true);
+                            }
+
+                            // Cognito AccessToken uses 'client_id' instead of 'aud'
+                            if (jwtToken.TryGetClaim("client_id", out var clientIdClaim) && !string.IsNullOrEmpty(clientIdClaim.Value))
+                            {
+                                return clientIdClaim.Value == audienceId ||
+                                        (validAudiences?.Contains(clientIdClaim.Value) == true);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error validating audience: {ex.Message}");
+                            return false;
+                        }
+                    }
+                    return false;
+                }
+                : null
+            };
+            options.Events = jwtBearerEvents;
+        });
     }
 
     /// <summary>

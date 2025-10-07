@@ -77,7 +77,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         this.domainEndPoint = new Uri(domainEndPoint);
     }
 
-    private AmazonCognitoIdentityProviderClient CognitoProvider
+    protected AmazonCognitoIdentityProviderClient CognitoProvider
     {
         get { return cognitoIdentityProvider ??= CreateService<AmazonCognitoIdentityProviderClient>(); }
     }
@@ -1138,14 +1138,14 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
             {
                 EncodedData =
                     $"IP:{request.IpAddress};ServerPath:{request.ServerPath};ServerName:{request.ServerName}"
-            }
+            },
+            AuthParameters = []
         };
 
         authRequest.AuthParameters.Add("USERNAME", request.UserName.Trim().ToLower(cultureInfo));
 
         if (authParameters != null)
         {
-            authRequest.AuthParameters ??= [];
             foreach (var (key, value) in authParameters)
                 authRequest.AuthParameters.Add(key, value);
         }
