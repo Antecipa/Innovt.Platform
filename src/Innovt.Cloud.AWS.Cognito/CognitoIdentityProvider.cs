@@ -77,7 +77,7 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
         this.domainEndPoint = new Uri(domainEndPoint);
     }
 
-    private AmazonCognitoIdentityProviderClient CognitoProvider
+    protected AmazonCognitoIdentityProviderClient CognitoProvider
     {
         get { return cognitoIdentityProvider ??= CreateService<AmazonCognitoIdentityProviderClient>(); }
     }
