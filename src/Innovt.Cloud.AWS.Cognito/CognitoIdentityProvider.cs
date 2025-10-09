@@ -573,6 +573,10 @@ public abstract class CognitoIdentityProvider : AwsBaseService, ICognitoIdentity
                 challengeResponses.Add("NEW_PASSWORD", command.Password);
                 break;
 
+            case "EMAIL_OTP":
+                challengeResponses.Add("EMAIL_OTP_CODE", command.ConfirmationCode);
+                break;
+
             default:
                 throw new CriticalException(ErrorCode.ChallengeNotAvailable);
         }
