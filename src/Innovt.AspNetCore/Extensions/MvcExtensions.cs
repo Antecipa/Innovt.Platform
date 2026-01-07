@@ -128,6 +128,224 @@ public static class MvcExtensions
             jwtBearerEvents: jwtBearerEvents);
     }
 
+    /// <summary>
+    ///     Adds Bearer token authentication with HttpOnly cookie support based on the provided configuration.
+    ///     Tokens can be provided either via HttpOnly cookies or Authorization header (for backward compatibility).
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="configSection">The configuration section name.</param>
+    /// <param name="cookieName">The name of the cookie containing the access token (default: "access_token").</param>
+    /// <param name="validateAudience">Whether to validate audience.</param>
+    /// <param name="validateIssuer">Whether to validate issuer.</param>
+    /// <param name="validateLifetime">Whether to validate lifetime.</param>
+    /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
+    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    public static void AddCookieOrBearerAuthorization(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "BearerAuthentication",
+        string cookieName = "access_token",
+        bool validateAudience = true,
+        bool validateIssuer = true,
+        bool validateLifetime = true,
+        bool validateIssuerSigningKey = true,
+        JwtBearerEvents additionalJwtBearerEvents = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var audienceSection = configuration.GetSection($"{configSection}:Audience");
+        var authoritySection = configuration.GetSection($"{configSection}:Authority");
+        var audiences = configuration.GetSection($"{configSection}:ValidAudiences").Get<string[]>();
+
+        if (audienceSection.Value == null)
+            throw new CriticalException($"The Config Section '{configSection}:Audience' not defined.");
+        if (authoritySection.Value == null)
+            throw new CriticalException($"The Config Section '{configSection}:Authority' not defined.");
+
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: true);
+
+        services.AddBearerAuthorization(
+            audienceSection.Value,
+            authoritySection.Value,
+            validateAudience: validateAudience,
+            validateIssuer: validateIssuer,
+            validateLifetime: validateLifetime,
+            validateIssuerSigningKey: validateIssuerSigningKey,
+            validAudiences: audiences,
+            jwtBearerEvents: jwtEvents);
+    }
+
+    /// <summary>
+    ///     Adds Bearer token authentication with HttpOnly cookie support.
+    ///     Tokens can be provided either via HttpOnly cookies or Authorization header (for backward compatibility).
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="audienceId">The audience ID.</param>
+    /// <param name="authority">The authority.</param>
+    /// <param name="cookieName">The name of the cookie containing the access token (default: "access_token").</param>
+    /// <param name="validateAudience">Whether to validate audience.</param>
+    /// <param name="validateIssuer">Whether to validate issuer.</param>
+    /// <param name="validateLifetime">Whether to validate lifetime.</param>
+    /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
+    /// <param name="validAudiences">The valid token audiences if you want to validate it.</param>
+    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    public static void AddCookieOrBearerAuthorization(
+        this IServiceCollection services,
+        string audienceId,
+        string authority,
+        string cookieName = "access_token",
+        bool validateAudience = true,
+        bool validateIssuer = true,
+        bool validateLifetime = true,
+        bool validateIssuerSigningKey = true,
+        string[]? validAudiences = null,
+        JwtBearerEvents additionalJwtBearerEvents = null)
+    {
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: true);
+
+        services.AddBearerAuthorization(
+            audienceId,
+            authority,
+            validateAudience,
+            validateIssuer,
+            validateLifetime,
+            validateIssuerSigningKey,
+            validAudiences,
+            jwtEvents);
+    }
+
+    /// <summary>
+    ///     Adds Bearer token authentication with ONLY HttpOnly cookie support based on the provided configuration.
+    ///     Tokens MUST be provided via HttpOnly cookies. Authorization header is NOT supported.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration.</param>
+    /// <param name="configSection">The configuration section name.</param>
+    /// <param name="cookieName">The name of the cookie containing the access token (default: "access_token").</param>
+    /// <param name="validateAudience">Whether to validate audience.</param>
+    /// <param name="validateIssuer">Whether to validate issuer.</param>
+    /// <param name="validateLifetime">Whether to validate lifetime.</param>
+    /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
+    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    public static void AddCookieAuthorization(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSection = "BearerAuthentication",
+        string cookieName = "access_token",
+        bool validateAudience = true,
+        bool validateIssuer = true,
+        bool validateLifetime = true,
+        bool validateIssuerSigningKey = true,
+        JwtBearerEvents additionalJwtBearerEvents = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var audienceSection = configuration.GetSection($"{configSection}:Audience");
+        var authoritySection = configuration.GetSection($"{configSection}:Authority");
+        var audiences = configuration.GetSection($"{configSection}:ValidAudiences").Get<string[]>();
+
+        if (audienceSection.Value == null)
+            throw new CriticalException($"The Config Section '{configSection}:Audience' not defined.");
+        if (authoritySection.Value == null)
+            throw new CriticalException($"The Config Section '{configSection}:Authority' not defined.");
+
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: false);
+
+        services.AddBearerAuthorization(
+            audienceSection.Value,
+            authoritySection.Value,
+            validateAudience: validateAudience,
+            validateIssuer: validateIssuer,
+            validateLifetime: validateLifetime,
+            validateIssuerSigningKey: validateIssuerSigningKey,
+            validAudiences: audiences,
+            jwtBearerEvents: jwtEvents);
+    }
+
+    /// <summary>
+    ///     Adds Bearer token authentication with ONLY HttpOnly cookie support.
+    ///     Tokens MUST be provided via HttpOnly cookies. Authorization header is NOT supported.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="audienceId">The audience ID.</param>
+    /// <param name="authority">The authority.</param>
+    /// <param name="cookieName">The name of the cookie containing the access token (default: "access_token").</param>
+    /// <param name="validateAudience">Whether to validate audience.</param>
+    /// <param name="validateIssuer">Whether to validate issuer.</param>
+    /// <param name="validateLifetime">Whether to validate lifetime.</param>
+    /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
+    /// <param name="validAudiences">The valid token audiences if you want to validate it.</param>
+    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    public static void AddCookieAuthorization(
+        this IServiceCollection services,
+        string audienceId,
+        string authority,
+        string cookieName = "access_token",
+        bool validateAudience = true,
+        bool validateIssuer = true,
+        bool validateLifetime = true,
+        bool validateIssuerSigningKey = true,
+        string[]? validAudiences = null,
+        JwtBearerEvents additionalJwtBearerEvents = null)
+    {
+        // Create JwtBearerEvents with ONLY cookie support (no header fallback)
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: false);
+
+        services.AddBearerAuthorization(
+            audienceId,
+            authority,
+            validateAudience,
+            validateIssuer,
+            validateLifetime,
+            validateIssuerSigningKey,
+            validAudiences,
+            jwtEvents);
+    }
+
+    /// <summary>
+    ///     Creates a JwtBearerEvents instance that supports reading tokens from HttpOnly cookies.
+    /// </summary>
+    /// <param name="cookieName">The name of the cookie containing the access token.</param>
+    /// <param name="baseEvents">Optional base events to extend. If provided, the OnMessageReceived will be merged.</param>
+    /// <param name="allowHeaderFallback">If true, falls back to Authorization header when cookie is not present.</param>
+    /// <returns>A configured JwtBearerEvents instance.</returns>
+    private static JwtBearerEvents CreateCookieAwareJwtBearerEvents(
+        string cookieName,
+        JwtBearerEvents baseEvents = null,
+        bool allowHeaderFallback = true)
+    {
+        var events = baseEvents ?? new JwtBearerEvents();
+
+        // Store original OnMessageReceived if it exists
+        var originalOnMessageReceived = events.OnMessageReceived;
+
+        events.OnMessageReceived = async context =>
+        {
+            if (context.Request.Cookies.TryGetValue(cookieName, out var cookieToken) &&
+                !string.IsNullOrWhiteSpace(cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+            else if (allowHeaderFallback &&
+                     context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+            {
+                var auth = authHeader.ToString();
+                if (auth.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = auth.Substring("Bearer ".Length).Trim();
+                }
+            }
+
+            if (originalOnMessageReceived != null)
+            {
+                await originalOnMessageReceived(context).ConfigureAwait(false);
+            }
+        };
+
+        return events;
+    }
+
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>
     ///     Adds Bearer token authentication.
