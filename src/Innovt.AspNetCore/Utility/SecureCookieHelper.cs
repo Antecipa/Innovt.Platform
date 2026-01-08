@@ -6,13 +6,16 @@ namespace Innovt.AspNetCore.Utility
     {
         public static void SetSecureCookie(
             HttpResponse response,
-            string name,
+            string cookieName,
             string value,
+            string domain,
             int expirationInSeconds = 3600,
-            bool httpOnly = true,
-            string domain = ".antecipa.com")
+            bool httpOnly = true
+            )
         {
             ArgumentNullException.ThrowIfNull(response);
+            if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
+            if (string.IsNullOrWhiteSpace(cookieName)) throw new ArgumentNullException(nameof(cookieName));
 
             var cookieOptions = new CookieOptions
             {
@@ -25,15 +28,17 @@ namespace Innovt.AspNetCore.Utility
                 IsEssential = true
             };
 
-            response.Cookies.Append($"{name}", value, cookieOptions);
+            response.Cookies.Append($"{cookieName}", value, cookieOptions);
         }
 
         public static void RemoveSecureCookie(
             HttpResponse response,
-            string name,
-            string domain = ".antecipa.com")
+            string cookieName,
+            string domain)
         {
             ArgumentNullException.ThrowIfNull(response);
+            if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
+            if (string.IsNullOrWhiteSpace(cookieName)) throw new ArgumentNullException(nameof(cookieName));
 
             var cookieOptions = new CookieOptions
             {
@@ -45,7 +50,7 @@ namespace Innovt.AspNetCore.Utility
                 Expires = DateTime.UtcNow.AddDays(-1)
             };
 
-            response.Cookies.Delete($"{name}", cookieOptions);
+            response.Cookies.Delete($"{cookieName}", cookieOptions);
         }
 
         public static string GetCookie(HttpRequest request, string name)

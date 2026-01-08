@@ -140,7 +140,7 @@ public static class MvcExtensions
     /// <param name="validateIssuer">Whether to validate issuer.</param>
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
-    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    /// <param name="jwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
     public static void AddCookieOrBearerAuthorization(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -150,7 +150,7 @@ public static class MvcExtensions
         bool validateIssuer = true,
         bool validateLifetime = true,
         bool validateIssuerSigningKey = true,
-        JwtBearerEvents additionalJwtBearerEvents = null)
+        JwtBearerEvents jwtBearerEvents = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -163,7 +163,7 @@ public static class MvcExtensions
         if (authoritySection.Value == null)
             throw new CriticalException($"The Config Section '{configSection}:Authority' not defined.");
 
-        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: true);
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, jwtBearerEvents, allowHeaderFallback: true);
 
         services.AddBearerAuthorization(
             audienceSection.Value,
@@ -189,7 +189,7 @@ public static class MvcExtensions
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
     /// <param name="validAudiences">The valid token audiences if you want to validate it.</param>
-    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    /// <param name="jwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
     public static void AddCookieOrBearerAuthorization(
         this IServiceCollection services,
         string audienceId,
@@ -200,9 +200,9 @@ public static class MvcExtensions
         bool validateLifetime = true,
         bool validateIssuerSigningKey = true,
         string[]? validAudiences = null,
-        JwtBearerEvents additionalJwtBearerEvents = null)
+        JwtBearerEvents jwtBearerEvents = null)
     {
-        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: true);
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, jwtBearerEvents, allowHeaderFallback: true);
 
         services.AddBearerAuthorization(
             audienceId,
@@ -227,7 +227,7 @@ public static class MvcExtensions
     /// <param name="validateIssuer">Whether to validate issuer.</param>
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
-    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    /// <param name="jwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
     public static void AddCookieAuthorization(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -237,7 +237,7 @@ public static class MvcExtensions
         bool validateIssuer = true,
         bool validateLifetime = true,
         bool validateIssuerSigningKey = true,
-        JwtBearerEvents additionalJwtBearerEvents = null)
+        JwtBearerEvents jwtBearerEvents = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -250,7 +250,7 @@ public static class MvcExtensions
         if (authoritySection.Value == null)
             throw new CriticalException($"The Config Section '{configSection}:Authority' not defined.");
 
-        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: false);
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, jwtBearerEvents, allowHeaderFallback: false);
 
         services.AddBearerAuthorization(
             audienceSection.Value,
@@ -276,7 +276,7 @@ public static class MvcExtensions
     /// <param name="validateLifetime">Whether to validate lifetime.</param>
     /// <param name="validateIssuerSigningKey">Whether to validate issuer signing key.</param>
     /// <param name="validAudiences">The valid token audiences if you want to validate it.</param>
-    /// <param name="additionalJwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
+    /// <param name="jwtBearerEvents">Optional additional JWT Bearer events to merge with cookie authentication.</param>
     public static void AddCookieAuthorization(
         this IServiceCollection services,
         string audienceId,
@@ -287,10 +287,10 @@ public static class MvcExtensions
         bool validateLifetime = true,
         bool validateIssuerSigningKey = true,
         string[]? validAudiences = null,
-        JwtBearerEvents additionalJwtBearerEvents = null)
+        JwtBearerEvents jwtBearerEvents = null)
     {
         // Create JwtBearerEvents with ONLY cookie support (no header fallback)
-        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, additionalJwtBearerEvents, allowHeaderFallback: false);
+        var jwtEvents = CreateCookieAwareJwtBearerEvents(cookieName, jwtBearerEvents, allowHeaderFallback: false);
 
         services.AddBearerAuthorization(
             audienceId,
