@@ -10,7 +10,8 @@ namespace Innovt.AspNetCore.Utility
             string value,
             string domain,
             int expirationInSeconds = 3600,
-            bool httpOnly = true
+            bool httpOnly = true,
+            SameSiteMode sameSiteMode = SameSiteMode.Strict
             )
         {
             ArgumentNullException.ThrowIfNull(response);
@@ -21,7 +22,7 @@ namespace Innovt.AspNetCore.Utility
             {
                 HttpOnly = httpOnly,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = sameSiteMode,
                 Path = "/",
                 Domain = domain,
                 Expires = DateTime.UtcNow.AddSeconds(expirationInSeconds),
@@ -34,7 +35,10 @@ namespace Innovt.AspNetCore.Utility
         public static void RemoveSecureCookie(
             HttpResponse response,
             string cookieName,
-            string domain)
+            string domain,
+            bool httpOnly = true,
+            SameSiteMode sameSiteMode = SameSiteMode.Strict
+            )
         {
             ArgumentNullException.ThrowIfNull(response);
             if (string.IsNullOrWhiteSpace(domain)) throw new ArgumentNullException(nameof(domain));
@@ -42,9 +46,9 @@ namespace Innovt.AspNetCore.Utility
 
             var cookieOptions = new CookieOptions
             {
-                HttpOnly = true,
+                HttpOnly = httpOnly,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = sameSiteMode,
                 Path = "/",
                 Domain = domain,
                 Expires = DateTime.UtcNow.AddDays(-1)
