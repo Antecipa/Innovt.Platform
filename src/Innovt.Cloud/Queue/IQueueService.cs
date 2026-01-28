@@ -39,9 +39,13 @@ public interface IQueueService<T> where T : IQueueMessage
     /// <typeparam name="TK">The type of the message to be enqueued.</typeparam>
     /// <param name="message">The message to be enqueued.</param>
     /// <param name="visibilityTimeoutInSeconds">The duration for which the enqueued message is invisible to other consumers.</param>
+    /// <param name="messageGroupId">
+    /// Messages within the same message group are always processed one at
+    /// a time, in strict order, ensuring that no two messages from the same group are processed
+    /// simultaneously.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The message ID associated with the enqueued message.</returns>
-    Task<string> EnQueueAsync<TK>(TK message, int? visibilityTimeoutInSeconds = null,
+    Task<string> EnQueueAsync<TK>(TK message, int? visibilityTimeoutInSeconds = null, string messageGroupId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

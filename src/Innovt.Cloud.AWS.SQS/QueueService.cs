@@ -200,6 +200,12 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     /// </summary>
     /// <param name="message"></param>
     /// <param name="visibilityTimeoutInSeconds"></param>
+    /// <param name="messageGroupId">
+    /// MessageGroupId is an attribute used in Amazon SQS FIFO (First-In-First-Out)
+    /// and standard queues. In FIFO queues, <c>MessageGroupId</c> organizes messages into
+    /// distinct groups. Messages within the same message group are always processed one at
+    /// a time, in strict order, ensuring that no two messages from the same group are processed
+    /// simultaneously.</param>
     /// <param name="cancellationToken">
     ///     // Gets and sets the property DelaySeconds.
     ///     The length of time, in seconds, for which to delay a specific message. Valid values:
@@ -210,7 +216,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
     ///     You can set this parameter only on a queue level.
     /// </param>
     /// <returns></returns>
-    public async Task<string> EnQueueAsync<TK>(TK message, int? visibilityTimeoutInSeconds = null,
+    public async Task<string> EnQueueAsync<TK>(TK message, int? visibilityTimeoutInSeconds = null, string messageGroupId = null,
         CancellationToken cancellationToken = default)
     {
         if (message == null) throw new ArgumentNullException(nameof(message));
@@ -221,6 +227,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
         var messageRequest = new SendMessageRequest
         {
             MessageBody = Serializer.SerializeObject(message),
+            MessageGroupId = messageGroupId,
             QueueUrl = await GetQueueUrlAsync().ConfigureAwait(false),
             MessageAttributes = new Dictionary<string, MessageAttributeValue>()
         };
@@ -271,6 +278,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
             var messageBatchItem = new SendMessageBatchRequestEntry
             {
                 Id = item.Id,
+                MessageGroupId = item.MessageGroupId,
                 DelaySeconds = delaySeconds.GetValueOrDefault(),
                 MessageBody = Serializer.SerializeObject(item.Message),
                 MessageAttributes = new Dictionary<string, MessageAttributeValue>()

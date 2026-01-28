@@ -15,6 +15,11 @@ public class MessageBatchRequest
     public string Id { get; set; }
 
     /// <summary>
+    ///    Gets or sets the message group ID.
+    ///  </summary>
+    public string MessageGroupId { get; set; }
+
+    /// <summary>
     ///     Gets or sets the message to be enqueued.
     /// </summary>
     public object Message { get; set; }
