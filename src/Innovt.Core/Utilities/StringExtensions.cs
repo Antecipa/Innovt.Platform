@@ -121,10 +121,10 @@ public static class StringExtensions
         return value.EndsWith(digitoVerificador);
     }
 
-    //Codigo referencia http://www.macoratti.net/11/09/c_val1.htm
     /// <summary>
     ///     Determines whether the string is a valid CNPJ (Cadastro Nacional da Pessoa Jurídica) number.
     ///     Supports both numeric and alphanumeric CNPJ formats.
+    ///     Ref: https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/documentos-tecnicos/cnpj/codigos-cnpj.zip/view
     /// </summary>
     /// <param name="cnpj">The string to validate as a CNPJ number.</param>
     /// <returns>True if the string is a valid CNPJ number; otherwise, false.</returns>
