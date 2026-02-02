@@ -485,7 +485,6 @@ public static class StringExtensions
     {
         if (cnpj.IsNullOrEmpty())
             return string.Empty;
-        ;
 
         cnpj = cnpj.PadLeft(14, '0');
 
