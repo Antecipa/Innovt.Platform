@@ -301,7 +301,7 @@ public class QueueService<T> : AwsBaseService, IQueueService<T> where T : IQueue
 
         if (response.Successful != null)
             foreach (var item in response.Successful)
-                result.Add(new MessageQueueResult { Id = item.Id, Success = true });
+                result.Add(new MessageQueueResult { Id = item.Id, MessageId = item.MessageId, Success = true });
 
         if (response.Failed == null) return result;
 

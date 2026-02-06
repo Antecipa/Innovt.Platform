@@ -15,6 +15,12 @@ public class MessageQueueResult
     public string Id { get; set; }
 
     /// <summary>
+    ///     Gets or sets the message ID assigned by the message queue system.
+    /// </summary>
+
+    public string MessageId { get; set; }
+
+    /// <summary>
     ///     Gets or sets an error message in case of a failed enqueue operation.
     /// </summary>
     public string Error { get; set; }

@@ -121,9 +121,10 @@ public static class StringExtensions
         return value.EndsWith(digitoVerificador);
     }
 
-    //Codigo referencia http://www.macoratti.net/11/09/c_val1.htm
     /// <summary>
     ///     Determines whether the string is a valid CNPJ (Cadastro Nacional da Pessoa Jurídica) number.
+    ///     Supports both numeric and alphanumeric CNPJ formats.
+    ///     Ref: https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/documentos-tecnicos/cnpj/codigos-cnpj.zip/view
     /// </summary>
     /// <param name="cnpj">The string to validate as a CNPJ number.</param>
     /// <returns>True if the string is a valid CNPJ number; otherwise, false.</returns>
@@ -132,38 +133,61 @@ public static class StringExtensions
         if (cnpj.IsNullOrEmpty())
             return false;
 
-        var multiplicador1 = new int[12] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
-        var multiplicador2 = new int[13] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
-        cnpj = cnpj.Trim();
-        cnpj = cnpj.Replace(".", "").Replace("-", "").Replace("/", "");
+        cnpj = cnpj.Trim().Replace(".", "").Replace("-", "").Replace("/", "").ToUpperInvariant();
+
         if (cnpj.Length != 14)
             return false;
+
+        // Validate that the CNPJ contains only valid characters (0-9, A-Z)
+        if (!cnpj.All(c => (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')))
+            return false;
+
+        var multiplicador1 = new int[12] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+        var multiplicador2 = new int[13] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+
         var tempCnpj = cnpj.Substring(0, 12);
 
+        // Calculate first check digit
         var soma = 0;
         for (var i = 0; i < 12; i++)
-            soma += int.Parse(tempCnpj[i].ToString()) * multiplicador1[i];
+        {
+            var charValue = GetCnpjCharacterValue(tempCnpj[i]);
+            soma += charValue * multiplicador1[i];
+        }
 
         var resto = soma % 11;
+        var digitoVerificador1 = resto < 2 ? 0 : 11 - resto;
 
-        if (resto < 2)
-            resto = 0;
-        else
-            resto = 11 - resto;
+        tempCnpj += digitoVerificador1.ToString();
 
-        var digit = resto.ToString();
-
-        tempCnpj += digit;
+        // Calculate second check digit
         soma = 0;
         for (var i = 0; i < 13; i++)
-            soma += int.Parse(tempCnpj[i].ToString()) * multiplicador2[i];
+        {
+            var charValue = GetCnpjCharacterValue(tempCnpj[i]);
+            soma += charValue * multiplicador2[i];
+        }
+
         resto = soma % 11;
-        if (resto < 2)
-            resto = 0;
-        else
-            resto = 11 - resto;
-        digit += resto;
+        var digitoVerificador2 = resto < 2 ? 0 : 11 - resto;
+
+        var digit = digitoVerificador1.ToString() + digitoVerificador2.ToString();
+
         return cnpj.EndsWith(digit);
+    }
+
+    /// <summary>
+    ///     Gets the numeric value of a CNPJ character for check digit calculation.
+    ///     Follows the formula: ASCII value - 48
+    /// </summary>
+    /// <param name="c">The character to convert.</param>
+    /// <returns>The numeric value of the character.</returns>
+    private static int GetCnpjCharacterValue(char c)
+    {
+        // For alphanumeric CNPJ, the value is ASCII - 48
+        // 0-9: ASCII 48-57 -> values 0-9
+        // A-Z: ASCII 65-90 -> values 17-42
+        return c - 48;
     }
 
     /// <summary>
@@ -439,7 +463,7 @@ public static class StringExtensions
         ;
 
         cpf = cpf.PadLeft(11, '0');
-        return FormatByMask(cpf, @"{0:000\.000\.000\-00}");
+        return FormatNumberByMask(cpf, @"{0:000\.000\.000\-00}");
     }
 
     /// <summary>
@@ -463,7 +487,7 @@ public static class StringExtensions
     /// <returns>The formatted cell phone number string or the original string if it is null or empty.</returns>
     public static string FormatCelPhone(this string celPhone)
     {
-        return FormatByMask(celPhone, @"{0:\(00\)00000\-0000}");
+        return FormatNumberByMask(celPhone, @"{0:\(00\)00000\-0000}");
     }
 
     /// <summary>
@@ -473,11 +497,12 @@ public static class StringExtensions
     /// <returns>The formatted phone number string or the original string if it is null or empty.</returns>
     public static string FormatPhoneNumber(this string phoneNumber)
     {
-        return FormatByMask(phoneNumber, @"{0:\(00\)000\-0000}");
+        return FormatNumberByMask(phoneNumber, @"{0:\(00\)000\-0000}");
     }
 
     /// <summary>
     ///     Formats a string as a CNPJ (Cadastro Nacional da Pessoa Jurídica) number with a mask (e.g., "00.000.000/0000-00").
+    ///     Supports both numeric and alphanumeric CNPJ formats.
     /// </summary>
     /// <param name="cnpj">The string to format as a CNPJ number.</param>
     /// <returns>The formatted CNPJ string or null if the input is null or empty.</returns>
@@ -485,11 +510,15 @@ public static class StringExtensions
     {
         if (cnpj.IsNullOrEmpty())
             return string.Empty;
-        ;
 
-        cnpj = cnpj.PadLeft(14, '0');
+        // Remove existing formatting
+        cnpj = cnpj.Trim().Replace(".", "").Replace("-", "").Replace("/", "").ToUpperInvariant();
 
-        return FormatByMask(cnpj, @"{0:00\.000\.000\/0000\-00}");
+        if (cnpj.Length != 14)
+            cnpj = cnpj.PadLeft(14, '0');
+
+        // Format: XX.XXX.XXX/XXXX-XX
+        return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
     }
 
     /// <summary>
@@ -515,7 +544,7 @@ public static class StringExtensions
     /// <returns>The formatted zip code string or the original string if it is null or empty.</returns>
     public static string FormatZipCode(this string cep)
     {
-        return FormatByMask(cep, @"{0:00000\-000}");
+        return FormatNumberByMask(cep, @"{0:00000\-000}");
     }
 
     /// <summary>
@@ -524,7 +553,7 @@ public static class StringExtensions
     /// <param name="value">The string to format.</param>
     /// <param name="mascara">The mask to apply.</param>
     /// <returns>The formatted string.</returns>
-    private static string FormatByMask(string value, string mascara)
+    private static string FormatNumberByMask(string value, string mascara)
     {
         var numbers = value.OnlyNumber();
 
