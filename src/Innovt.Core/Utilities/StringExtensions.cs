@@ -426,9 +426,8 @@ public static class StringExtensions
     {
         if (str.IsNullOrEmpty())
             return string.Empty;
-        ;
 
-        return Regex.Replace(str, "[^0-9a-zA-Z]+", " ");
+        return Regex.Replace(str, "[^0-9a-zA-Z]+", "");
     }
 
     /// <summary>
@@ -460,7 +459,6 @@ public static class StringExtensions
     {
         if (cpf.IsNullOrEmpty())
             return string.Empty;
-        ;
 
         cpf = cpf.PadLeft(11, '0');
         return FormatNumberByMask(cpf, @"{0:000\.000\.000\-00}");
